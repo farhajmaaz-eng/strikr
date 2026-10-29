@@ -155,9 +155,7 @@ describe('AI generation handler', () => {
   });
 
   it('validates and returns a complete workout plan', async () => {
-    const draft = {
-      title: 'Six-round sharpening',
-      notes: 'Long guard, short combinations.',
+    const batch = {
       combinations: [
         { name: 'One two', steps: ['jab', 'cross'], level: 'beginner' },
         { name: 'Slip counter', steps: ['slip', 'cross', 'lead-hook'], level: 'beginner' },
@@ -170,11 +168,11 @@ describe('AI generation handler', () => {
         count: 3,
         planSettings: { rounds: 8, roundSeconds: 120, restSeconds: 45 },
       },
-      deps({ fetchImpl: vi.fn(async () => chatResponse(draft)) }),
+      deps({ fetchImpl: vi.fn(async () => chatResponse(batch)) }),
     );
     expect(result.status).toBe(200);
     if (!result.body.ok || result.body.mode !== 'plan') return;
-    expect(result.body.plan.title).toBe('Six-round sharpening');
+    expect(result.body.plan.title).toBe('Clean Fundamentals · 8 rounds');
     expect(result.body.plan.rounds).toBe(8);
     expect(result.body.plan.roundSeconds).toBe(120);
     expect(result.body.plan.restSeconds).toBe(45);

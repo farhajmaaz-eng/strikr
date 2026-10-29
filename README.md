@@ -109,7 +109,7 @@ tests/                 Timer, validation, API fallback, persistence, combination
 3. Requesty is called with a strict prompt that allows only the canonical technique IDs.
 4. The response is extracted from raw JSON or fenced JSON, then parsed with Zod.
 5. A second domain pass rejects unknown IDs, techniques outside the discipline/level, invalid levels, and duplicate sequences.
-6. Plan mode asks the model for a title, coaching note, and combinations, then applies the fighter's chosen rounds, round length, and rest server-side. This keeps plans fast and makes timing deterministic.
+6. Plan mode uses the same fast combination batch request, then applies the fighter's chosen rounds, round length, and rest plus a focus-derived title and coaching cue server-side. This keeps plans fast and makes timing deterministic.
 7. On any failure the API returns a typed error with `fallback: "curated"`, and the UI offers curated combinations without blocking training.
 
 Rate limiting is in-memory per function instance (10 requests per client per minute). That is a best-effort guard, not a durable global quota; use an external store if you need hard limits across instances.

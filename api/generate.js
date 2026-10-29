@@ -19782,17 +19782,8 @@ var aiPlanEnvelopeSchema = external_exports.object({
   notes: external_exports.string().trim().max(400).default(""),
   combinations: external_exports.array(aiCombinationSchema).min(1).max(24)
 }).strict();
-var aiPlanDraftSchema = external_exports.object({
-  title: external_exports.string().trim().min(1).max(90),
-  notes: external_exports.string().trim().max(400).default(""),
-  combinations: external_exports.array(aiCombinationSchema).min(1).max(24)
-}).strict();
 function parseAiCombinations(raw) {
   const result = aiCombinationsEnvelopeSchema.safeParse(raw);
-  return result.success ? result.data : null;
-}
-function parseAiPlanDraft(raw) {
-  const result = aiPlanDraftSchema.safeParse(raw);
   return result.success ? result.data : null;
 }
 
@@ -20104,8 +20095,6 @@ ${techniqueLines}`;
   const user = request.mode === "plan" ? `Design a coherent shadowboxing session built from exactly ${request.count} distinct combinations.
 Return this exact JSON shape:
 {
-  "title": "short session title, max 60 chars",
-  "notes": "one short coaching cue, max 240 chars",
   "combinations": [
     { "name": "short combo name", "steps": ["allowed-id", "allowed-id"], "focus": "${request.focus}", "level": "${request.level}" }
   ]
@@ -20607,14 +20596,17 @@ async function generateHandler(rawBody, deps) {
     focus: request.focus,
     allowedTechniques: allowed
   };
+  const envelope = parseAiCombinations(aiJson);
+  if (!envelope) {
+    return failure2(
+      502,
+      request.mode === "plan" ? "AI_INVALID_PLAN" : "AI_INVALID_COMBINATIONS",
+      request.mode === "plan" ? "The AI coach returned an invalid workout plan." : "The AI coach returned invalid combinations."
+    );
+  }
+  const validated = validateCombinations(envelope.combinations, context);
   if (request.mode === "plan") {
-    const draft = parseAiPlanDraft(aiJson);
-    const rawCombinations = draft?.combinations ?? parseAiCombinations(aiJson)?.combinations;
-    if (!rawCombinations) {
-      return failure2(502, "AI_INVALID_PLAN", "The AI coach returned an invalid workout plan.");
-    }
-    const validated2 = validateCombinations(rawCombinations, context);
-    if (validated2.combinations.length < 2) {
+    if (validated.combinations.length < 2) {
       return failure2(
         502,
         "AI_DISALLOWED_TECHNIQUES",
@@ -20632,23 +20624,18 @@ async function generateHandler(rawBody, deps) {
         ok: true,
         mode: "plan",
         plan: {
-          title: (draft ? sanitizeText(draft.title, 90) : "") || `${PLAN_TITLES[request.focus]} \xB7 ${request.count} combinations`,
+          title: `${PLAN_TITLES[request.focus]} \xB7 ${settings.rounds} rounds`,
           focus: request.focus,
           rounds: settings.rounds,
           roundSeconds: settings.roundSeconds,
           restSeconds: settings.restSeconds,
-          notes: (draft ? sanitizeText(draft.notes, 400) : "") || FOCUS_CUES[request.focus],
-          combinations: validated2.combinations.slice(0, 16)
+          notes: FOCUS_CUES[request.focus],
+          combinations: validated.combinations.slice(0, 16)
         },
-        rejected: validated2.rejected
+        rejected: validated.rejected
       }
     };
   }
-  const envelope = parseAiCombinations(aiJson);
-  if (!envelope) {
-    return failure2(502, "AI_INVALID_COMBINATIONS", "The AI coach returned invalid combinations.");
-  }
-  const validated = validateCombinations(envelope.combinations, context);
   if (validated.combinations.length === 0) {
     return failure2(
       502,

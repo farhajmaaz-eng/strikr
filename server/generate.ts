@@ -1,7 +1,7 @@
 import type { AiGenerationRequest, AiGenerationResponse, Focus } from '../shared/types';
-import { aiRequestBodySchema, parseAiCombinations, parseAiPlanDraft } from '../shared/schemas';
+import { aiRequestBodySchema, parseAiCombinations } from '../shared/schemas';
 import { buildAiPrompt } from './prompt';
-import { resolveAllowedTechniques, sanitizeText, validateCombinations } from './validate';
+import { resolveAllowedTechniques, validateCombinations } from './validate';
 
 export interface GenerateDeps {
   env: Record<string, string | undefined>;
@@ -167,13 +167,19 @@ export async function generateHandler(
     allowedTechniques: allowed,
   };
 
+  const envelope = parseAiCombinations(aiJson);
+  if (!envelope) {
+    return failure(
+      502,
+      request.mode === 'plan' ? 'AI_INVALID_PLAN' : 'AI_INVALID_COMBINATIONS',
+      request.mode === 'plan'
+        ? 'The AI coach returned an invalid workout plan.'
+        : 'The AI coach returned invalid combinations.',
+    );
+  }
+  const validated = validateCombinations(envelope.combinations, context);
+
   if (request.mode === 'plan') {
-    const draft = parseAiPlanDraft(aiJson);
-    const rawCombinations = draft?.combinations ?? parseAiCombinations(aiJson)?.combinations;
-    if (!rawCombinations) {
-      return failure(502, 'AI_INVALID_PLAN', 'The AI coach returned an invalid workout plan.');
-    }
-    const validated = validateCombinations(rawCombinations, context);
     if (validated.combinations.length < 2) {
       return failure(
         502,
@@ -192,14 +198,12 @@ export async function generateHandler(
         ok: true,
         mode: 'plan',
         plan: {
-          title:
-            (draft ? sanitizeText(draft.title, 90) : '') ||
-            `${PLAN_TITLES[request.focus]} · ${request.count} combinations`,
+          title: `${PLAN_TITLES[request.focus]} · ${settings.rounds} rounds`,
           focus: request.focus,
           rounds: settings.rounds,
           roundSeconds: settings.roundSeconds,
           restSeconds: settings.restSeconds,
-          notes: (draft ? sanitizeText(draft.notes, 400) : '') || FOCUS_CUES[request.focus],
+          notes: FOCUS_CUES[request.focus],
           combinations: validated.combinations.slice(0, 16),
         },
         rejected: validated.rejected,
@@ -207,11 +211,6 @@ export async function generateHandler(
     };
   }
 
-  const envelope = parseAiCombinations(aiJson);
-  if (!envelope) {
-    return failure(502, 'AI_INVALID_COMBINATIONS', 'The AI coach returned invalid combinations.');
-  }
-  const validated = validateCombinations(envelope.combinations, context);
   if (validated.combinations.length === 0) {
     return failure(
       502,

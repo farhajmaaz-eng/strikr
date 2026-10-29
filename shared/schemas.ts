@@ -53,17 +53,8 @@ const aiPlanEnvelopeSchema = z
   })
   .strict();
 
-const aiPlanDraftSchema = z
-  .object({
-    title: z.string().trim().min(1).max(90),
-    notes: z.string().trim().max(400).default(''),
-    combinations: z.array(aiCombinationSchema).min(1).max(24),
-  })
-  .strict();
-
 export type AiCombinationsEnvelope = z.infer<typeof aiCombinationsEnvelopeSchema>;
 export type AiPlanEnvelope = z.infer<typeof aiPlanEnvelopeSchema>;
-export type AiPlanDraft = z.infer<typeof aiPlanDraftSchema>;
 export type AiCombinationRaw = z.infer<typeof aiCombinationSchema>;
 
 export function parseAiCombinations(raw: unknown): AiCombinationsEnvelope | null {
@@ -73,10 +64,5 @@ export function parseAiCombinations(raw: unknown): AiCombinationsEnvelope | null
 
 export function parseAiPlan(raw: unknown): AiPlanEnvelope | null {
   const result = aiPlanEnvelopeSchema.safeParse(raw);
-  return result.success ? result.data : null;
-}
-
-export function parseAiPlanDraft(raw: unknown): AiPlanDraft | null {
-  const result = aiPlanDraftSchema.safeParse(raw);
   return result.success ? result.data : null;
 }

@@ -33,8 +33,6 @@ ${techniqueLines}`;
       ? `Design a coherent shadowboxing session built from exactly ${request.count} distinct combinations.
 Return this exact JSON shape:
 {
-  "title": "short session title, max 60 chars",
-  "notes": "one short coaching cue, max 240 chars",
   "combinations": [
     { "name": "short combo name", "steps": ["allowed-id", "allowed-id"], "focus": "${request.focus}", "level": "${request.level}" }
   ]
