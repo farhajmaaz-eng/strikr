@@ -67,7 +67,8 @@ The client posts only workout parameters to `/api/generate`. The function builds
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Start the Vite dev server. |
-| `npm run build` | Type-check and build the production bundle plus service worker. |
+| `npm run build` | Bundle the API function, type-check, and build the production client plus service worker. |
+| `npm run build:api` | Bundle `server/api-entry.ts` into the self-contained `api/generate.js` function. |
 | `npm run preview` | Preview the built client locally. AI routes need Vercel. |
 | `npm run typecheck` | Run the TypeScript project build with no emit checks beyond the build config. |
 | `npm run lint` | Run ESLint over the repository. |
@@ -80,8 +81,9 @@ The client posts only workout parameters to `/api/generate`. The function builds
 
 ```text
 api/
-  generate.ts          Vercel function wrapper: method guard, client key, rate limit
+  generate.js          Self-contained bundled Vercel function (generated, committed)
 server/
+  api-entry.ts         Vercel handler source; bundled by scripts/build-api.mjs
   generate.ts          Requesty call, response extraction, plan assembly, error mapping
   prompt.ts            Strict system and user prompts
   validate.ts          Technique-scope, discipline, level, duplicate, and sanitization checks

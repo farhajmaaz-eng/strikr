@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run build:api && tsc -b && vite build",
+    "build:api": "node scripts/build-api.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19.3.0",
     "@vercel/node": "^5.5.20",
     "@vitejs/plugin-react": "^6.1.2",
+    "esbuild": "^0.27.7",
     "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",

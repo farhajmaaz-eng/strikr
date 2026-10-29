@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { RateLimiter, generateHandler } from '../server/generate';
+import { RateLimiter, generateHandler } from './generate';
 
 const limiter = new RateLimiter();
 
