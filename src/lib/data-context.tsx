@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Combination, CompletedSession } from '../../shared/types';
-import { combinationSignature } from '../../shared/combinations';
+import { CURATED_COMBINATIONS, combinationSignature } from '../../shared/combinations';
 import {
   clearSessions,
   loadCustomCombinations,
@@ -56,7 +56,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addCombinations = useCallback(
     (incoming: Combination[]) => {
       const seen = new Set(
-        customCombinations.map((combination) => combinationSignature(combination.steps)),
+        [...CURATED_COMBINATIONS, ...customCombinations].map((combination) =>
+          combinationSignature(combination.steps),
+        ),
       );
       const additions: Combination[] = [];
       for (const combination of incoming) {

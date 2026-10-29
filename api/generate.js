@@ -20479,7 +20479,7 @@ function sanitizeText(value, maxLength) {
 
 // server/generate.ts
 var DEFAULT_BASE_URL = "https://router.requesty.ai/v1";
-var REQUEST_TIMEOUT_MS = 45e3;
+var REQUEST_TIMEOUT_MS = 5e4;
 var PLAN_TITLES = {
   fundamentals: "Clean Fundamentals",
   power: "Heavy Hands",

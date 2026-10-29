@@ -155,7 +155,7 @@ vercel --prod
 
 `vercel.json` sets the Vite build, `dist` output, SPA rewrites that preserve `/api/*`, asset caching, security headers, and a 60-second maximum duration for the AI function.
 
-The AI handler times out upstream requests at 45 seconds and returns a curated fallback instead of hanging the UI.
+The AI handler times out upstream requests at 50 seconds and returns a curated fallback instead of hanging the UI.
 
 ## Privacy
 

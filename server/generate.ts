@@ -17,7 +17,7 @@ export interface HandlerResult {
 }
 
 const DEFAULT_BASE_URL = 'https://router.requesty.ai/v1';
-const REQUEST_TIMEOUT_MS = 45_000;
+const REQUEST_TIMEOUT_MS = 50_000;
 
 const PLAN_TITLES: Record<Focus, string> = {
   fundamentals: 'Clean Fundamentals',
