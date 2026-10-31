@@ -465,7 +465,7 @@ function ResultPanel({
 }) {
   return (
     <WindowFrame
-      title={view.mode === 'plan' ? 'session plan / validated' : 'combination batch / validated'}
+      title={view.mode === 'plan' ? 'session plan' : 'combination batch'}
       code={`${String(view.combos.length).padStart(2, '0')} COMBO`}
       actions={<Chip tone="success">{view.rejected > 0 ? `${view.rejected} filtered` : 'Validated'}</Chip>}
     >
@@ -730,7 +730,7 @@ function mapAiCombinations(
     seen.add(signature);
     result.push({
       id: createId('ai'),
-      name: item.name.slice(0, 70),
+      name: formatCombinationName(item.name),
       steps: [...item.steps],
       discipline: context.discipline,
       level: item.level ?? context.level,
@@ -746,4 +746,15 @@ function mapAiCombinations(
 function safeFocus(focus: Focus, discipline: Discipline): Focus {
   if (focus === 'clinch' && discipline !== 'muay-thai') return 'fundamentals';
   return focus;
+}
+
+function formatCombinationName(name: string): string {
+  const cleaned = name
+    .replace(/_+/g, ' ')
+    .replace(/([A-Za-z])-(?=[A-Za-z])/g, '$1 ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .slice(0, 70);
+  return cleaned || 'AI combination';
 }
