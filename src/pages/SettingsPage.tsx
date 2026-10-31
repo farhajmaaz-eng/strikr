@@ -35,6 +35,7 @@ import {
   RangeInput,
   Segmented,
   Toggle,
+  WindowFrame,
 } from '../components/ui';
 
 export function SettingsPage() {
@@ -117,22 +118,25 @@ export function SettingsPage() {
     <div className="animate-fade-up">
       <PageHeader
         eyebrow="Preferences"
+        code="CFG / 05"
         title="Set the room."
-        description="Defaults, sound, and voice. Everything is stored on this device and applied to the next session."
+        description="Defaults, sound, and voice. Stored on this device and applied to the next session."
       />
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        <section className="rounded-2xl border border-line bg-panel/45 p-5 sm:p-6">
-          <SectionHead
-            icon={<SlidersHorizontal className="size-4" />}
-            title="Training defaults"
-            description="The setup screen and quick start load these values."
-          />
-          <div className="mt-5 space-y-5">
+      <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
+        <WindowFrame
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              <SlidersHorizontal className="size-3 text-accent" />
+              01 / training defaults
+            </span>
+          }
+          code="CFG-01"
+        >
+          <div className="space-y-4 p-3.5 sm:p-4">
+            <SectionNote>The setup screen and quick start load these values.</SectionNote>
             <div>
-              <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                Discipline
-              </label>
+              <label className="meta-label mb-1.5 block">Discipline</label>
               <Segmented
                 options={DISCIPLINES.map((item) => ({
                   value: item,
@@ -143,11 +147,9 @@ export function SettingsPage() {
                 compact
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                  Stance
-                </label>
+                <label className="meta-label mb-1.5 block">Stance</label>
                 <select
                   className="field-input"
                   value={settings.defaultStance}
@@ -163,9 +165,7 @@ export function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                  Level
-                </label>
+                <label className="meta-label mb-1.5 block">Level</label>
                 <select
                   className="field-input"
                   value={settings.defaultLevel}
@@ -182,9 +182,7 @@ export function SettingsPage() {
               </div>
             </div>
             <div>
-              <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                Default focus
-              </label>
+              <label className="meta-label mb-1.5 block">Default focus</label>
               <select
                 className="field-input"
                 value={settings.defaultFocus}
@@ -199,7 +197,7 @@ export function SettingsPage() {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <NumberStepper
                 label="Rounds"
                 value={settings.defaultRounds}
@@ -227,9 +225,7 @@ export function SettingsPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                Count-in
-              </label>
+              <label className="meta-label mb-1.5 block">Count-in</label>
               <Segmented
                 options={[
                   { value: '0', label: 'Off' },
@@ -244,244 +240,261 @@ export function SettingsPage() {
               />
             </div>
           </div>
-        </section>
+        </WindowFrame>
 
-        <section className="rounded-2xl border border-line bg-panel/45 p-5 sm:p-6">
-          <SectionHead
-            icon={<Volume2 className="size-4" />}
-            title="Sound & voice"
-            description="Bells and spoken callouts are synthesized on this device."
-          />
-          <div className="mt-3 divide-y divide-line/70">
-            <Toggle
-              label="Spoken callouts"
-              description="Read each combination aloud during rounds."
-              checked={settings.speechEnabled}
-              onChange={(checked) => {
-                if (!checked) window.speechSynthesis?.cancel();
-                else primeSpeech();
-                updateSettings({ speechEnabled: checked });
-              }}
-            />
-            <Toggle
-              label="Bells & cues"
-              description="Round bells, count-in ticks, and completion bells."
-              checked={settings.soundEnabled}
-              onChange={(checked) => {
-                if (checked) void bellAudio.unlock();
-                updateSettings({ soundEnabled: checked });
-              }}
-            />
-            <div className="py-4">
-              <RangeInput
-                label="Speech rate"
-                value={settings.speechRate}
-                min={0.6}
-                max={1.4}
-                step={0.05}
-                onChange={(value) => updateSettings({ speechRate: value })}
-                display={`${settings.speechRate.toFixed(2)}×`}
-              />
-            </div>
-            <div className="py-4">
-              <RangeInput
-                label="Bell volume"
-                value={settings.bellVolume}
-                min={0}
-                max={1}
-                step={0.05}
-                onChange={(value) => updateSettings({ bellVolume: value })}
-                display={`${Math.round(settings.bellVolume * 100)}%`}
-              />
-            </div>
-            <div className="py-4">
-              <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                Voice
-              </label>
-              <div className="flex gap-2">
-                <select
-                  className="field-input flex-1"
-                  value={settings.voiceURI ?? ''}
-                  onChange={(event) =>
-                    updateSettings({ voiceURI: event.target.value || null })
-                  }
-                >
-                  <option value="">System default</option>
-                  {voices.map((voice) => (
-                    <option key={voice.voiceURI} value={voice.voiceURI}>
-                      {voice.name} ({voice.lang})
-                    </option>
-                  ))}
-                </select>
-                <Button variant="secondary" onClick={testVoice} icon={<Mic2 className="size-4" />}>
-                  Test
-                </Button>
+        <WindowFrame
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              <Volume2 className="size-3 text-accent" />
+              02 / sound & voice
+            </span>
+          }
+          code="CFG-02"
+        >
+          <div className="p-3.5 sm:p-4">
+            <SectionNote>Bells and spoken callouts are synthesized on this device.</SectionNote>
+            <div className="mt-2 grid sm:grid-cols-2 sm:divide-x sm:divide-line">
+              <div className="divide-y divide-line sm:pr-3.5">
+                <Toggle
+                  label="Spoken callouts"
+                  description="Read each combination aloud during rounds."
+                  checked={settings.speechEnabled}
+                  onChange={(checked) => {
+                    if (!checked) window.speechSynthesis?.cancel();
+                    else primeSpeech();
+                    updateSettings({ speechEnabled: checked });
+                  }}
+                />
+                <Toggle
+                  label="Bells & cues"
+                  description="Round bells, count-in ticks, and completion bells."
+                  checked={settings.soundEnabled}
+                  onChange={(checked) => {
+                    if (checked) void bellAudio.unlock();
+                    updateSettings({ soundEnabled: checked });
+                  }}
+                />
+                <div className="py-3.5">
+                  <RangeInput
+                    label="Speech rate"
+                    value={settings.speechRate}
+                    min={0.6}
+                    max={1.4}
+                    step={0.05}
+                    onChange={(value) => updateSettings({ speechRate: value })}
+                    display={`${settings.speechRate.toFixed(2)}×`}
+                  />
+                </div>
+                <div className="py-3.5">
+                  <RangeInput
+                    label="Bell volume"
+                    value={settings.bellVolume}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    onChange={(value) => updateSettings({ bellVolume: value })}
+                    display={`${Math.round(settings.bellVolume * 100)}%`}
+                  />
+                </div>
               </div>
-              {voices.length === 0 ? (
-                <p className="mt-2 text-[10px] text-mist-dim">
-                  No English voices found yet. Your browser may load them after the first click.
-                </p>
-              ) : null}
-            </div>
-            <div className="flex items-center justify-between gap-3 py-4">
-              <div>
-                <p className="text-xs font-semibold text-paper">Callout interval</p>
-                <p className="mt-0.5 text-[10px] text-mist-dim">
-                  How often a new combination is called during a round.
-                </p>
+              <div className="divide-y divide-line border-t border-line sm:border-t-0 sm:pl-3.5">
+                <div className="py-3.5">
+                  <label className="meta-label mb-1.5 block">Voice</label>
+                  <div className="flex flex-col gap-1.5">
+                    <select
+                      className="field-input"
+                      value={settings.voiceURI ?? ''}
+                      onChange={(event) =>
+                        updateSettings({ voiceURI: event.target.value || null })
+                      }
+                    >
+                      <option value="">System default</option>
+                      {voices.map((voice) => (
+                        <option key={voice.voiceURI} value={voice.voiceURI}>
+                          {voice.name} ({voice.lang})
+                        </option>
+                      ))}
+                    </select>
+                    <Button variant="secondary" onClick={testVoice} icon={<Mic2 className="size-3.5" />}>
+                      Test voice
+                    </Button>
+                  </div>
+                  {voices.length === 0 ? (
+                    <p className="mt-2 font-mono text-[9px] leading-relaxed text-mist-dim">
+                      No English voices found yet. The browser may load them after the first click.
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex items-center justify-between gap-3 py-3.5">
+                  <div>
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-paper">
+                      Callout interval
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-mist-dim">
+                      How often a new combination is called during a round.
+                    </p>
+                  </div>
+                  <select
+                    className="field-input w-24 shrink-0"
+                    value={settings.calloutIntervalSeconds}
+                    onChange={(event) =>
+                      updateSettings({ calloutIntervalSeconds: Number(event.target.value) })
+                    }
+                  >
+                    {[5, 8, 10, 12, 15, 20].map((seconds) => (
+                      <option key={seconds} value={seconds}>
+                        {seconds}s
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center justify-between gap-3 py-3.5">
+                  <div>
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-paper">
+                      Test bell
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-mist-dim">Preview the current volume.</p>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={testBell} icon={<Bell className="size-3" />}>
+                    Ring
+                  </Button>
+                </div>
               </div>
-              <select
-                className="field-input w-28"
-                value={settings.calloutIntervalSeconds}
-                onChange={(event) =>
-                  updateSettings({ calloutIntervalSeconds: Number(event.target.value) })
-                }
-              >
-                {[5, 8, 10, 12, 15, 20].map((seconds) => (
-                  <option key={seconds} value={seconds}>
-                    {seconds}s
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center justify-between gap-3 py-4">
-              <div>
-                <p className="text-xs font-semibold text-paper">Test bell</p>
-                <p className="mt-0.5 text-[10px] text-mist-dim">Preview the current volume.</p>
-              </div>
-              <Button variant="secondary" size="sm" onClick={testBell} icon={<Bell className="size-3.5" />}>
-                Ring
-              </Button>
             </div>
           </div>
-        </section>
+        </WindowFrame>
 
-        <section className="rounded-2xl border border-line bg-panel/45 p-5 sm:p-6">
-          <SectionHead
-            icon={<Smartphone className="size-4" />}
-            title="Device"
-            description="Keep the screen awake and install STRIKR for a full-screen gym feel."
-          />
-          <div className="mt-3 divide-y divide-line/70">
-            <Toggle
-              label="Keep screen awake"
-              description="Uses the Screen Wake Lock API during live rounds where supported."
-              checked={settings.wakeLockEnabled}
-              onChange={(checked) => updateSettings({ wakeLockEnabled: checked })}
-            />
-            <div className="py-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+        <WindowFrame
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              <Smartphone className="size-3 text-accent" />
+              03 / device
+            </span>
+          }
+          code="CFG-03"
+        >
+          <div className="p-3.5 sm:p-4">
+            <SectionNote>Keep the screen awake and install STRIKR for a full-screen gym feel.</SectionNote>
+            <div className="mt-2 divide-y divide-line">
+              <Toggle
+                label="Keep screen awake"
+                description="Uses the Screen Wake Lock API during live rounds where supported."
+                checked={settings.wakeLockEnabled}
+                onChange={(checked) => updateSettings({ wakeLockEnabled: checked })}
+              />
+              <div className="py-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-paper">
+                      Install app
+                    </p>
+                    <p className="mt-1 max-w-md text-[10px] leading-relaxed text-mist-dim">
+                      {standalone
+                        ? 'Running as an installed app.'
+                        : installPrompt
+                          ? 'Add STRIKR to your home screen for offline training.'
+                          : 'Use your browser menu → Add to Home screen. The app shell is cached offline.'}
+                    </p>
+                  </div>
+                  {standalone ? (
+                    <span className="border border-success/35 bg-success/10 px-2 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-success">
+                      Installed
+                    </span>
+                  ) : installPrompt ? (
+                    <Button size="sm" onClick={install} icon={<Download className="size-3" />}>
+                      Install
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 py-3.5">
                 <div>
-                  <p className="text-sm font-medium text-paper">Install app</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-mist-dim">
-                    {standalone
-                      ? 'Running as an installed app.'
-                      : installPrompt
-                        ? 'Add STRIKR to your home screen for offline training.'
-                        : 'Use your browser menu → Add to Home screen. The app shell is cached offline.'}
+                  <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-paper">
+                    Offline engine
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-mist-dim">
+                    Curated combinations and the timer ship with the app.
                   </p>
                 </div>
-                {standalone ? (
-                  <span className="rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-success">
-                    Installed
-                  </span>
-                ) : installPrompt ? (
-                  <Button size="sm" onClick={install} icon={<Download className="size-3.5" />}>
-                    Install
-                  </Button>
-                ) : null}
+                <span className="inline-flex items-center gap-1.5 border border-success/35 bg-success/10 px-2 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-success">
+                  <span className="size-1.5 bg-success" /> Ready
+                </span>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-3 py-4">
-              <div>
-                <p className="text-xs font-semibold text-paper">Offline engine</p>
-                <p className="mt-0.5 text-[10px] text-mist-dim">
-                  Curated combinations and the timer ship with the app.
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-success">
-                <span className="size-1.5 rounded-full bg-success" /> Ready
-              </span>
-            </div>
           </div>
-        </section>
+        </WindowFrame>
 
-        <section className="rounded-2xl border border-line bg-panel/45 p-5 sm:p-6">
-          <SectionHead
-            icon={<Database className="size-4" />}
-            title="Local data"
-            description="No account. No server history. Export is not needed because this device is the source."
-          />
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <DataStat value={String(sessions.length)} label="Sessions" />
-            <DataStat value={String(customCombinations.length)} label="Custom combos" />
-            <DataStat value={String(favorites.length)} label="Favorites" />
+        <WindowFrame
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              <Database className="size-3 text-accent" />
+              04 / local data
+            </span>
+          }
+          code="CFG-04"
+        >
+          <div className="p-3.5 sm:p-4">
+            <SectionNote>No account. No server history. This device is the source of truth.</SectionNote>
+            <div className="mt-3 grid grid-cols-3 gap-1.5">
+              <DataStat value={String(sessions.length)} label="Sessions" />
+              <DataStat value={String(customCombinations.length)} label="Custom combos" />
+              <DataStat value={String(favorites.length)} label="Favorites" />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setClearOpen(true)}
+                icon={<Trash2 className="size-3" />}
+              >
+                Clear training history
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setResetOpen(true)}
+                icon={<RotateCcw className="size-3" />}
+              >
+                Reset all settings
+              </Button>
+            </div>
+            <p className="mt-3 font-mono text-[9px] leading-relaxed text-mist-dim">
+              Data lives in local storage on this browser. Clearing browser data removes it.
+            </p>
           </div>
-          <div className="mt-4 space-y-2">
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => setClearOpen(true)}
-              icon={<Trash2 className="size-3.5" />}
-            >
-              Clear training history
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setResetOpen(true)}
-              icon={<RotateCcw className="size-3.5" />}
-            >
-              Reset all settings
-            </Button>
-          </div>
-          <p className="mt-4 text-[10px] leading-relaxed text-mist-dim">
-            Data lives in local storage on this browser. Clearing browser data removes it.
-          </p>
-        </section>
+        </WindowFrame>
 
-        <section className="rounded-2xl border border-line bg-panel/45 p-5 sm:p-6 lg:col-span-2">
-          <SectionHead
-            icon={<Info className="size-4" />}
-            title="About STRIKR"
-            description="A striking studio built for the phone in your hand."
-          />
-          <div className="mt-4 grid gap-4 text-[11px] leading-relaxed text-mist-dim sm:grid-cols-3">
-            <div>
-              <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-paper">
-                Training engine
-              </p>
-              <p>
-                Timestamp-based timer, locally synthesized bells, browser speech, and curated
-                combinations. No network needed once the app is loaded.
-              </p>
-            </div>
-            <div>
-              <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-paper">
-                AI coach
-              </p>
-              <p>
-                Nemotron 3.5 Lightning 30B A3B via Requesty, proxied through a Vercel function.
-                The model and key stay in server-side environment variables.
-              </p>
-            </div>
-            <div>
-              <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-paper">
-                Built local-first
-              </p>
-              <p>
-                Settings, custom combinations, favorites, and history are stored in your browser.
-                Nothing is uploaded except the AI request you choose to make.
-              </p>
-            </div>
+        <WindowFrame
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              <Info className="size-3 text-accent" />
+              05 / about STRIKR
+            </span>
+          }
+          code="SYS"
+          className="lg:col-span-2"
+        >
+          <div className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <AboutBlock
+              title="Training engine"
+              copy="Timestamp-based timer, locally synthesized bells, browser speech, and curated combinations. No network needed once the app is loaded."
+            />
+            <AboutBlock
+              title="AI coach"
+              copy="Nemotron 3.5 Lightning 30B A3B via Requesty, proxied through a Vercel function. The model and key stay server-side."
+            />
+            <AboutBlock
+              title="Built local-first"
+              copy="Settings, custom combinations, favorites, and history stay in this browser. Nothing is uploaded except the AI request you choose to make."
+            />
           </div>
-          <div className="mt-5 flex items-center justify-between border-t border-line/70 pt-4 text-[10px] text-mist-dim">
-            <span>STRIKR v1.0</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-3.5 py-2.5 font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">
+            <span>STRIKR v1.0 / local build</span>
             <span className="inline-flex items-center gap-1.5">
               <Settings2 className="size-3" /> Made for rounds, not dashboards
             </span>
           </div>
-        </section>
+        </WindowFrame>
       </div>
 
       <ConfirmDialog
@@ -513,35 +526,28 @@ export function SettingsPage() {
   );
 }
 
-function SectionHead({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
+function SectionNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-ink-soft text-accent">
-        {icon}
-      </span>
-      <div>
-        <h2 className="font-display text-xl font-semibold uppercase tracking-[0.03em] text-paper">
-          {title}
-        </h2>
-        <p className="mt-0.5 text-[10px] leading-relaxed text-mist-dim">{description}</p>
-      </div>
-    </div>
+    <p className="border-l-2 border-accent bg-ink-soft px-3 py-2 font-mono text-[9px] leading-relaxed tracking-[0.02em] text-mist-dim">
+      {children}
+    </p>
   );
 }
 
 function DataStat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-xl border border-line bg-ink-soft px-3 py-3 text-center">
-      <p className="font-display text-2xl font-semibold leading-none tabular-nums text-paper">{value}</p>
-      <p className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-mist-dim">{label}</p>
+    <div className="border border-line bg-ink-soft px-2 py-2.5 text-center">
+      <p className="font-display text-xl font-semibold leading-none tabular-nums text-paper">{value}</p>
+      <p className="mt-1.5 font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-mist-dim">{label}</p>
+    </div>
+  );
+}
+
+function AboutBlock({ title, copy }: { title: string; copy: string }) {
+  return (
+    <div className="p-3.5">
+      <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.12em] text-accent">{title}</p>
+      <p className="mt-1.5 text-[10px] leading-relaxed text-mist-dim">{copy}</p>
     </div>
   );
 }

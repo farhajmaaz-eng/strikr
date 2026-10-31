@@ -56,20 +56,40 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={item.id}
             role="status"
             className={cn(
-              'pointer-events-auto flex w-full max-w-sm items-center gap-2.5 rounded-xl border px-4 py-3 text-sm shadow-2xl backdrop-blur-md animate-fade-up',
-              item.tone === 'success' && 'border-success/25 bg-success/12 text-success',
-              item.tone === 'error' && 'border-danger/25 bg-danger/12 text-danger',
-              item.tone === 'info' && 'border-line bg-coal/95 text-paper',
+              'pointer-events-auto w-full max-w-sm border bg-coal animate-fade-up',
+              item.tone === 'success' && 'border-success/45',
+              item.tone === 'error' && 'border-danger/50',
+              item.tone === 'info' && 'border-line-bright',
             )}
           >
-            {item.tone === 'success' ? (
-              <CheckCircle2 className="size-4 shrink-0" />
-            ) : item.tone === 'error' ? (
-              <TriangleAlert className="size-4 shrink-0" />
-            ) : (
-              <Info className="size-4 shrink-0" />
-            )}
-            {item.message}
+            <div className="window-bar min-h-6 border-line bg-ink-soft px-2">
+              <span className="window-controls" aria-hidden>
+                <span />
+                <span />
+                <span />
+              </span>
+              <span className="window-title text-[9px]">
+                {item.tone === 'success' ? 'success' : item.tone === 'error' ? 'error' : 'notice'}
+              </span>
+              <span className="window-code">SYS</span>
+            </div>
+            <div
+              className={cn(
+                'flex items-start gap-2 border-l-2 px-3 py-2.5 text-[11px] leading-relaxed',
+                item.tone === 'success' && 'border-l-success text-success',
+                item.tone === 'error' && 'border-l-danger text-danger',
+                item.tone === 'info' && 'border-l-accent text-paper',
+              )}
+            >
+              {item.tone === 'success' ? (
+                <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" />
+              ) : item.tone === 'error' ? (
+                <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+              ) : (
+                <Info className="mt-0.5 size-3.5 shrink-0 text-accent" />
+              )}
+              <span className="font-mono text-[10px] uppercase tracking-[0.03em]">{item.message}</span>
+            </div>
           </div>
         ))}
       </div>

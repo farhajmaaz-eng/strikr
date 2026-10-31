@@ -24,7 +24,7 @@ import { useWorkoutSession } from '../lib/workout-context';
 import { formatDuration, formatRoundLength } from '../lib/format';
 import { sessionsThisWeek, totalsFor } from '../lib/stats';
 import { cn } from '../lib/cn';
-import { Button, Chip, Segmented, StatTile } from '../components/ui';
+import { Button, Segmented, StatTile, WindowBar, WindowFrame } from '../components/ui';
 import { SessionCard } from '../components/SessionCard';
 
 interface QuickPreset {
@@ -36,9 +36,9 @@ interface QuickPreset {
 }
 
 const presets: QuickPreset[] = [
-  { id: 'quick', label: 'Quick 3×2', rounds: 3, roundSeconds: 120, restSeconds: 60 },
-  { id: 'standard', label: 'Standard 6×3', rounds: 6, roundSeconds: 180, restSeconds: 60 },
-  { id: 'camp', label: 'Camp 10×3', rounds: 10, roundSeconds: 180, restSeconds: 60 },
+  { id: 'quick', label: 'Quick', rounds: 3, roundSeconds: 120, restSeconds: 60 },
+  { id: 'standard', label: 'Standard', rounds: 6, roundSeconds: 180, restSeconds: 60 },
+  { id: 'camp', label: 'Camp', rounds: 10, roundSeconds: 180, restSeconds: 60 },
   { id: 'conditioning', label: 'Conditioning', rounds: 8, roundSeconds: 120, restSeconds: 30 },
 ];
 
@@ -47,16 +47,24 @@ export function HomePage() {
   const { sessions, customCombinations, favorites } = useData();
   const { startWorkout } = useWorkoutSession();
   const [discipline, setDiscipline] = useState<Discipline>(settings.defaultDiscipline);
-  const [preset, setPreset] = useState<QuickPreset>(() => {
+  const [preset, setPreset] = useState<QuickPreset | null>(() => {
     return (
       presets.find(
         (item) =>
           item.rounds === settings.defaultRounds &&
           item.roundSeconds === settings.defaultRoundSeconds &&
           item.restSeconds === settings.defaultRestSeconds,
-      ) ?? presets[1]!
+      ) ?? null
     );
   });
+  const activePreset: QuickPreset =
+    preset ?? {
+      id: 'defaults',
+      label: 'My defaults',
+      rounds: settings.defaultRounds,
+      roundSeconds: settings.defaultRoundSeconds,
+      restSeconds: settings.defaultRestSeconds,
+    };
 
   const weekSessions = useMemo(() => sessionsThisWeek(sessions), [sessions]);
   const weekTotals = useMemo(() => totalsFor(weekSessions), [weekSessions]);
@@ -64,6 +72,11 @@ export function HomePage() {
   const recent = sessions.slice(0, 2);
   const libraryCount = CURATED_COMBINATIONS.length + customCombinations.length;
   const focus = safeFocus(settings.defaultFocus, discipline);
+  const dateLabel = new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: '2-digit',
+  }).format(new Date());
 
   const start = () => {
     startWorkout(
@@ -71,9 +84,9 @@ export function HomePage() {
         discipline,
         stance: settings.defaultStance,
         level: settings.defaultLevel,
-        rounds: preset.rounds,
-        roundSeconds: preset.roundSeconds,
-        restSeconds: preset.restSeconds,
+        rounds: activePreset.rounds,
+        roundSeconds: activePreset.roundSeconds,
+        restSeconds: activePreset.restSeconds,
         focus,
         enabledTechniques: techniqueIdsFor(discipline, settings.defaultLevel),
         countInSeconds: settings.defaultCountInSeconds,
@@ -83,210 +96,315 @@ export function HomePage() {
   };
 
   return (
-    <div className="space-y-7 sm:space-y-9">
-      <section className="animate-fade-up">
-        <div className="flex flex-wrap items-center gap-2">
-          <Chip tone="accent">
-            <span className="size-1.5 rounded-full bg-accent animate-pulse-soft" />
-            Local-first striking studio
-          </Chip>
-          <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-mist-dim">
-            {new Intl.DateTimeFormat(undefined, {
-              weekday: 'long',
-              month: 'short',
-              day: 'numeric',
-            }).format(new Date())}
-          </span>
-        </div>
+    <div className="space-y-3 animate-fade-up">
+      <section className="window-panel">
+        <WindowBar title="strikr :: training console" code="HOME / 01" />
+        <div className="grid lg:grid-cols-[1.55fr_1fr]">
+          <div className="border-b border-line p-4 sm:p-6 lg:border-b-0 lg:border-r">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[9px] uppercase tracking-[0.1em]">
+              <span className="inline-flex items-center gap-1.5 text-accent">
+                <span className="status-dot" />
+                Local-first striking studio
+              </span>
+              <span className="text-mist-dim/50">/</span>
+              <span className="text-mist-dim">{dateLabel}</span>
+            </div>
 
-        <div className="mt-5 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-          <div>
-            <h1 className="font-display text-[62px] font-semibold uppercase leading-[0.78] tracking-[-0.01em] text-paper sm:text-[92px] lg:text-[106px]">
+            <h1 className="mt-5 font-display text-[64px] font-semibold uppercase leading-[0.76] tracking-[-0.01em] text-paper sm:text-[88px]">
               Sharpen
               <br />
               <span className="text-accent">the art.</span>
             </h1>
-            <p className="mt-5 max-w-md text-sm leading-relaxed text-mist sm:text-[15px]">
-              Boxing, kickboxing, and Muay Thai. Build the session, hear the combinations,
-              and put the work in — online or off.
+            <p className="mt-4 max-w-md text-[13px] leading-relaxed text-mist sm:text-sm">
+              Boxing, kickboxing, and Muay Thai. Build the session, hear the combinations, and put
+              the work in. Online or off.
             </p>
+
+            <div className="mt-5 flex flex-wrap gap-1">
+              {DISCIPLINES.map((item) => (
+                <span
+                  key={item}
+                  className="border border-line bg-ink-soft px-2 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-mist-dim"
+                >
+                  {DISCIPLINE_LABELS[item]}
+                </span>
+              ))}
+              <span className="border border-line bg-ink-soft px-2 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-mist-dim">
+                No account
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 lg:w-[330px]">
-            <StatTile value={String(weekTotals.sessions)} label="Sessions" hint="this week" />
-            <StatTile value={String(weekTotals.rounds)} label="Rounds" hint="this week" />
-            <StatTile
-              value={weekTotals.trainingSeconds ? formatDuration(weekTotals.trainingSeconds, { compact: true }) : '0m'}
-              label="Time"
-              hint="this week"
-            />
+          <div className="flex flex-col p-3 sm:p-4">
+            <div className="flex items-center justify-between border-b border-line pb-2">
+              <p className="meta-label">Week / telemetry</p>
+              <span className="font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-success">
+                [ live ]
+              </span>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-1.5">
+              <StatTile value={String(weekTotals.sessions)} label="Sessions" hint="this week" />
+              <StatTile value={String(weekTotals.rounds)} label="Rounds" hint="this week" />
+              <StatTile
+                value={
+                  weekTotals.trainingSeconds
+                    ? formatDuration(weekTotals.trainingSeconds, { compact: true })
+                    : '0m'
+                }
+                label="Time"
+                hint="this week"
+              />
+            </div>
+
+            <div className="mt-3 divide-y divide-line border border-line bg-ink-soft">
+              <SignalRow
+                label="All-time work"
+                value={
+                  allTotals.sessions > 0
+                    ? `${allTotals.sessions} sessions / ${allTotals.rounds} rounds`
+                    : 'No sessions logged'
+                }
+              />
+              <SignalRow
+                label="Default build"
+                value={`${settings.defaultRounds} × ${formatRoundLength(settings.defaultRoundSeconds)}`}
+              />
+              <SignalRow
+                label="Stance / level"
+                value={`${settings.defaultStance} / ${settings.defaultLevel}`}
+              />
+            </div>
+
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-3 font-mono text-[8px] uppercase tracking-[0.1em] text-mist-dim">
+              <span className="inline-flex items-center gap-1.5">
+                <WifiOff className="size-3 text-accent" />
+                Offline capable
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Swords className="size-3 text-accent" />
+                {libraryCount} combos loaded
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[28px] border border-accent/20 bg-panel/45 p-5 animate-fade-up sm:p-7">
-        <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent">
-                Quick start
-              </p>
-              <h2 className="mt-1.5 font-display text-3xl font-semibold uppercase leading-none tracking-[0.01em] sm:text-4xl">
-                Straight to work.
-              </h2>
+      <WindowFrame
+        title="quick start"
+        code="SES-01"
+        actions={
+          <Link
+            to="/settings"
+            className="inline-flex h-7 items-center gap-1 border border-line bg-ink-soft px-2 font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-mist transition-colors hover:border-line-bright hover:text-paper"
+          >
+            <SlidersHorizontal className="size-3" />
+            Defaults
+          </Link>
+        }
+      >
+        <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <p className="meta-label">Discipline</p>
+              <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">
+                mode / {preset ? 'quick' : 'defaults'}
+              </span>
             </div>
-            <Link
-              to="/settings"
-              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-ink-soft px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-mist transition-colors hover:border-line-bright hover:text-paper"
-            >
-              <SlidersHorizontal className="size-3.5" />
-              Defaults
-            </Link>
-          </div>
+            <div className="mt-2">
+              <Segmented
+                options={DISCIPLINES.map((item) => ({ value: item, label: DISCIPLINE_LABELS[item] }))}
+                value={discipline}
+                onChange={setDiscipline}
+                label="Discipline"
+              />
+            </div>
 
-          <div className="mt-5 max-w-lg">
-            <Segmented
-              options={DISCIPLINES.map((item) => ({ value: item, label: DISCIPLINE_LABELS[item] }))}
-              value={discipline}
-              onChange={setDiscipline}
-              label="Discipline"
-            />
-          </div>
+            <div className="mt-3 grid grid-cols-3 divide-x divide-line border border-line bg-ink-soft">
+              <Metric value={String(activePreset.rounds)} label="Rounds" />
+              <Metric value={formatRoundLength(activePreset.roundSeconds)} label="Round" />
+              <Metric value={formatRoundLength(activePreset.restSeconds)} label="Rest" />
+            </div>
 
-          <div className="mt-5 grid grid-cols-3 divide-x divide-line rounded-2xl border border-line bg-ink-soft/80">
-            <Metric value={String(preset.rounds)} label="Rounds" />
-            <Metric value={formatRoundLength(preset.roundSeconds)} label="Round" />
-            <Metric value={formatRoundLength(preset.restSeconds)} label="Rest" />
-          </div>
-
-          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <Button size="lg" onClick={start} icon={<Play className="size-5 fill-current" />} className="w-full sm:w-auto sm:min-w-52">
-              Start session
-            </Button>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="mt-3 grid grid-cols-2 gap-1 sm:grid-cols-4">
               {presets.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setPreset(item)}
+                  aria-pressed={preset?.id === item.id}
                   className={cn(
-                    'rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors',
-                    preset.id === item.id
-                      ? 'border-accent/40 bg-accent/10 text-accent-bright'
-                      : 'border-line bg-transparent text-mist-dim hover:border-line-bright hover:text-mist',
+                    'border px-2.5 py-2 text-left transition-colors duration-100',
+                    preset?.id === item.id
+                      ? 'border-accent bg-accent text-ink'
+                      : 'border-line bg-ink-soft text-mist hover:border-line-bright hover:text-paper',
                   )}
                 >
-                  {item.label}
+                  <span className="block font-mono text-[8px] font-semibold uppercase tracking-[0.1em] opacity-70">
+                    {item.label}
+                  </span>
+                  <span className="mt-1 block font-display text-lg font-semibold uppercase leading-none">
+                    {item.rounds} × {formatRoundLength(item.roundSeconds)}
+                  </span>
                 </button>
               ))}
             </div>
+
+            <Button
+              size="lg"
+              onClick={start}
+              icon={<Play className="size-4 fill-current" />}
+              className="mt-3 w-full"
+            >
+              Start session
+            </Button>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-medium text-mist-dim">
-            <span className="inline-flex items-center gap-1.5">
-              <Swords className="size-3.5 text-accent/80" />
-              {settings.defaultStance === 'orthodox' ? 'Orthodox' : 'Southpaw'} ·{' '}
-              {settings.defaultLevel}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Zap className="size-3.5 text-accent/80" />
-              Spoken callouts
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <WifiOff className="size-3.5 text-accent/80" />
-              Works offline
-            </span>
+          <div className="border-t border-line p-4 sm:p-5 lg:border-l lg:border-t-0">
+            <div className="flex items-center justify-between border-b border-line pb-2">
+              <p className="meta-label">Session parameters</p>
+              <span className="window-code">CFG</span>
+            </div>
+            <div className="divide-y divide-line">
+              <ParameterRow icon={<Swords className="size-3.5" />} label="Stance" value={settings.defaultStance === 'orthodox' ? 'Orthodox' : 'Southpaw'} />
+              <ParameterRow icon={<Zap className="size-3.5" />} label="Focus" value={FOCUS_LABELS[focus]} />
+              <ParameterRow icon={<Clock3 className="size-3.5" />} label="Count-in" value={settings.defaultCountInSeconds === 0 ? 'Off' : `${settings.defaultCountInSeconds}s`} />
+              <ParameterRow icon={<WifiOff className="size-3.5" />} label="Engine" value="On-device" />
+            </div>
+
+            <div className="mt-3 border border-accent/40 bg-accent/5 p-2.5">
+              <p className="meta-label text-accent">Ready check</p>
+              <p className="mt-1 font-display text-xl font-semibold uppercase leading-none text-paper">
+                Timer / bells / callouts
+              </p>
+              <p className="mt-1.5 font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">
+                Speech and audio unlock on start.
+              </p>
+            </div>
           </div>
         </div>
-      </section>
+      </WindowFrame>
 
       <section className="grid gap-3 sm:grid-cols-3">
         <FeatureCard
           to="/setup"
-          icon={<Dumbbell className="size-5" />}
-          kicker="Custom session"
+          icon={<Dumbbell className="size-4" />}
+          kicker="session"
+          code="02"
           title="Build your round"
-          copy="Rounds, stance, focus, and the exact techniques you want to throw."
+          copy="Rounds, stance, focus, and the exact techniques in the pool."
         />
         <FeatureCard
           to="/combos"
-          icon={<Layers3 className="size-5" />}
-          kicker={`${libraryCount} combinations`}
-          title="Open the library"
-          copy="Curated flows, favorites, and your own custom sequences."
-          meta={`${favorites.length} saved`}
+          icon={<Layers3 className="size-4" />}
+          kicker="library"
+          code="03"
+          title="Open the arsenal"
+          copy="Curated flows, favorites, and custom sequences."
+          meta={`${libraryCount} total / ${favorites.length} saved`}
         />
         <FeatureCard
           to="/ai"
-          icon={<Sparkles className="size-5" />}
-          kicker="AI coach"
+          icon={<Sparkles className="size-4" />}
+          kicker="ai lab"
+          code="04"
           title="Generate a batch"
-          copy="Validated combinations and full plans from the Nemotron coach."
+          copy="Scoped combinations and plans with server-side validation."
           meta="Fallback ready"
         />
       </section>
 
-      <section>
-        <div className="mb-3 flex items-end justify-between">
-          <div>
-            <h2 className="font-display text-xl font-semibold uppercase tracking-[0.04em]">
-              Recent work
-            </h2>
-            <p className="mt-0.5 text-xs text-mist-dim">
+      <WindowFrame title="recent work / local log" code={`${String(sessions.length).padStart(2, '0')} ENTRIES`}>
+        <div className="p-3">
+          <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
+            <p className="font-mono text-[9px] uppercase tracking-[0.08em] text-mist-dim">
               {allTotals.sessions > 0
-                ? `${allTotals.sessions} sessions · ${allTotals.rounds} rounds all time`
-                : 'Your training log starts with the first bell.'}
+                ? `${allTotals.sessions} sessions / ${allTotals.rounds} rounds stored on this device`
+                : 'No entries. The first bell starts the log.'}
             </p>
+            {sessions.length > 0 ? (
+              <Link
+                to="/history"
+                className="inline-flex items-center gap-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-accent-bright hover:text-accent"
+              >
+                All history <ChevronRight className="size-3" />
+              </Link>
+            ) : null}
           </div>
-          {sessions.length > 0 ? (
-            <Link
-              to="/history"
-              className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-bright"
-            >
-              All history <ChevronRight className="size-3.5" />
-            </Link>
-          ) : null}
-        </div>
 
-        {recent.length > 0 ? (
-          <div className="grid gap-3 lg:grid-cols-2">
-            {recent.map((session) => (
-              <SessionCard key={session.id} session={session} stance={session.stance} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-dashed border-line bg-panel/25 px-5 py-5 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl border border-line bg-panel text-mist-dim">
-                <CalendarDays className="size-4" />
-              </span>
-              <div>
-                <p className="text-sm font-medium text-paper">No sessions logged yet</p>
-                <p className="mt-0.5 text-xs text-mist-dim">
-                  Finish a session and the rounds, time, and callouts land here.
-                </p>
-              </div>
+          {recent.length > 0 ? (
+            <div className="grid gap-2 lg:grid-cols-2">
+              {recent.map((session) => (
+                <SessionCard key={session.id} session={session} stance={session.stance} />
+              ))}
             </div>
-            <Button variant="secondary" size="sm" onClick={start} icon={<Clock3 className="size-3.5" />}>
-              Start the first
-            </Button>
-          </div>
-        )}
-      </section>
+          ) : (
+            <div className="flex flex-col items-start justify-between gap-3 border border-dashed border-line bg-ink-soft px-4 py-4 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-3">
+                <span className="grid size-9 place-items-center border border-line bg-panel text-mist-dim">
+                  <CalendarDays className="size-4" />
+                </span>
+                <div>
+                  <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-paper">
+                    No sessions logged yet
+                  </p>
+                  <p className="mt-1 text-[11px] text-mist-dim">
+                    Finish a session and its rounds, time, and callouts land here.
+                  </p>
+                </div>
+              </div>
+              <Button variant="secondary" size="sm" onClick={start} icon={<Clock3 className="size-3" />}>
+                Start the first
+              </Button>
+            </div>
+          )}
+        </div>
+      </WindowFrame>
+    </div>
+  );
+}
+
+function SignalRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-2.5 py-2">
+      <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">{label}</span>
+      <span className="truncate text-right font-mono text-[9px] font-semibold uppercase tracking-[0.04em] text-mist">
+        {value}
+      </span>
     </div>
   );
 }
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <div className="px-3 py-3.5 text-center sm:px-4">
+    <div className="px-2 py-2.5 text-center">
       <p className="font-display text-2xl font-semibold leading-none tabular-nums text-paper">
         {value}
       </p>
-      <p className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
+      <p className="mt-1.5 font-mono text-[8px] font-semibold uppercase tracking-[0.12em] text-mist-dim">
         {label}
       </p>
+    </div>
+  );
+}
+
+function ParameterRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2">
+      <span className="inline-flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">
+        <span className="text-accent">{icon}</span>
+        {label}
+      </span>
+      <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.04em] text-mist">
+        {value}
+      </span>
     </div>
   );
 }
@@ -295,6 +413,7 @@ function FeatureCard({
   to,
   icon,
   kicker,
+  code,
   title,
   copy,
   meta,
@@ -302,33 +421,31 @@ function FeatureCard({
   to: string;
   icon: React.ReactNode;
   kicker: string;
+  code: string;
   title: string;
   copy: string;
   meta?: string;
 }) {
   return (
-    <Link
-      to={to}
-      className="group relative flex flex-col rounded-2xl border border-line bg-panel/40 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-line-bright hover:bg-panel/70"
-    >
-      <div className="flex items-start justify-between">
-        <span className="grid size-10 place-items-center rounded-xl border border-line bg-ink-soft text-accent">
+    <Link to={to} className="group window-panel flex flex-col transition-colors hover:border-line-bright">
+      <WindowBar
+        title={`module / ${kicker}`}
+        code={code}
+        actions={<ArrowUpRight className="size-3 text-mist-dim transition-colors group-hover:text-accent" />}
+      />
+      <div className="flex flex-1 flex-col p-3.5">
+        <span className="grid size-8 place-items-center border border-line bg-ink-soft text-accent">
           {icon}
         </span>
-        <ArrowUpRight className="size-4 text-mist-dim transition-colors group-hover:text-accent" />
+        <h3 className="mt-3 font-display text-xl font-semibold uppercase leading-none tracking-[0.02em] text-paper">
+          {title}
+        </h3>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-mist-dim">{copy}</p>
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-2.5 font-mono text-[8px] uppercase tracking-[0.08em]">
+          <span className="text-mist-dim">{meta ?? 'Ready'}</span>
+          <span className="text-mist-dim transition-colors group-hover:text-accent">Open →</span>
+        </div>
       </div>
-      <p className="mt-5 text-[9px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-        {kicker}
-      </p>
-      <h3 className="mt-1 font-display text-xl font-semibold uppercase leading-none tracking-[0.02em] text-paper">
-        {title}
-      </h3>
-      <p className="mt-2 text-[11px] leading-relaxed text-mist-dim">{copy}</p>
-      {meta ? (
-        <span className="mt-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-mist-dim/70">
-          {meta}
-        </span>
-      ) : null}
     </Link>
   );
 }
@@ -338,5 +455,4 @@ function safeFocus(focus: Focus, discipline: Discipline): Focus {
   return FOCUSES.includes(focus) ? focus : 'fundamentals';
 }
 
-// Keeps focus labels reachable for future home personalization.
 export const homeFocusLabels = FOCUS_LABELS;

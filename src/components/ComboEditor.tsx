@@ -150,7 +150,7 @@ export function ComboEditor({
       description="Build a sequence from the techniques available at this level. Exact duplicates are blocked."
       size="lg"
       footer={
-        <div className="grid grid-cols-[1fr_auto] gap-3">
+        <div className="grid grid-cols-[1fr_auto] gap-2">
           <Button onClick={save} disabled={steps.length < 2}>
             {initial ? 'Save changes' : 'Add to library'}
           </Button>
@@ -160,12 +160,10 @@ export function ComboEditor({
         </div>
       }
     >
-      <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="space-y-5">
+      <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-4">
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-mist-dim">
-              Discipline
-            </label>
+            <label className="meta-label mb-1.5 block">Discipline</label>
             <Segmented
               options={DISCIPLINES.map((item) => ({ value: item, label: DISCIPLINE_LABELS[item] }))}
               value={discipline}
@@ -174,11 +172,9 @@ export function ComboEditor({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                Level
-              </label>
+              <label className="meta-label mb-1.5 block">Level</label>
               <select
                 className="field-input"
                 value={level}
@@ -192,9 +188,7 @@ export function ComboEditor({
               </select>
             </div>
             <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                Focus
-              </label>
+              <label className="meta-label mb-1.5 block">Focus</label>
               <select
                 className="field-input"
                 value={focus}
@@ -210,7 +204,7 @@ export function ComboEditor({
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-mist-dim">
+            <label className="meta-label mb-1.5 block">
               Name <span className="normal-case tracking-normal text-mist-dim/60">(optional)</span>
             </label>
             <input
@@ -223,29 +217,27 @@ export function ComboEditor({
           </div>
 
           <div>
-            <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-[0.16em] text-mist-dim">
-                Sequence
-              </label>
-              <span className="text-[10px] text-mist-dim">{steps.length} / 8 moves</span>
+            <div className="mb-1.5 flex items-center justify-between border-b border-line pb-1.5">
+              <label className="meta-label">Sequence</label>
+              <span className="font-mono text-[9px] tabular-nums text-mist-dim">{steps.length} / 8</span>
             </div>
             {steps.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-line bg-ink-soft px-4 py-6 text-center text-xs text-mist-dim">
-                Pick techniques from the right to build your combination.
+              <div className="border border-dashed border-line bg-ink-soft px-4 py-6 text-center font-mono text-[10px] uppercase tracking-[0.06em] text-mist-dim">
+                Pick techniques to build the sequence.
               </div>
             ) : (
-              <ol className="space-y-2">
+              <ol className="space-y-1">
                 {steps.map((step, index) => {
                   const technique = available.find((item) => item.id === step);
                   return (
                     <li
                       key={`${step}-${index}`}
-                      className="flex items-center gap-2 rounded-xl border border-line bg-ink-soft px-2.5 py-2"
+                      className="flex items-center gap-2 border border-line bg-ink-soft px-2 py-1.5"
                     >
-                      <span className="grid size-6 shrink-0 place-items-center rounded-md bg-panel text-[10px] font-bold tabular-nums text-accent">
+                      <span className="grid size-5 shrink-0 place-items-center border border-line bg-panel font-mono text-[9px] font-bold tabular-nums text-accent">
                         {index + 1}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-sm text-paper">
+                      <span className="min-w-0 flex-1 truncate text-[11px] text-paper">
                         {technique ? renderTechniqueName(technique, stance) : step}
                       </span>
                       <button
@@ -253,39 +245,39 @@ export function ComboEditor({
                         aria-label="Move up"
                         onClick={() => moveStep(index, -1)}
                         disabled={index === 0}
-                        className="grid size-7 place-items-center rounded-md text-mist-dim hover:bg-panel hover:text-paper disabled:opacity-25"
+                        className="grid size-6 place-items-center text-mist-dim hover:bg-panel hover:text-paper disabled:opacity-25"
                       >
-                        <ArrowUp className="size-3.5" />
+                        <ArrowUp className="size-3" />
                       </button>
                       <button
                         type="button"
                         aria-label="Move down"
                         onClick={() => moveStep(index, 1)}
                         disabled={index === steps.length - 1}
-                        className="grid size-7 place-items-center rounded-md text-mist-dim hover:bg-panel hover:text-paper disabled:opacity-25"
+                        className="grid size-6 place-items-center text-mist-dim hover:bg-panel hover:text-paper disabled:opacity-25"
                       >
-                        <ArrowDown className="size-3.5" />
+                        <ArrowDown className="size-3" />
                       </button>
                       <button
                         type="button"
                         aria-label="Remove step"
                         onClick={() => setSteps((current) => current.filter((_, i) => i !== index))}
-                        className="grid size-7 place-items-center rounded-md text-mist-dim hover:bg-danger/10 hover:text-danger"
+                        className="grid size-6 place-items-center text-mist-dim hover:bg-danger/10 hover:text-danger"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-3" />
                       </button>
                     </li>
                   );
                 })}
               </ol>
             )}
-            {error ? <div className="mt-3"><InlineError>{error}</InlineError></div> : null}
+            {error ? <div className="mt-2"><InlineError>{error}</InlineError></div> : null}
           </div>
         </div>
 
         <div className="flex min-h-0 flex-col">
-          <div className="relative mb-3">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-dim" />
+          <div className="relative mb-2">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-mist-dim" />
             <input
               className="field-input pl-9"
               value={search}
@@ -293,13 +285,13 @@ export function ComboEditor({
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-          <div className="max-h-[46dvh] space-y-4 overflow-y-auto rounded-2xl border border-line bg-ink-soft p-3 lg:max-h-[52vh]">
+          <div className="max-h-[46dvh] space-y-4 overflow-y-auto border border-line bg-ink-soft p-2.5 lg:max-h-[52vh]">
             {[...grouped.entries()].map(([category, techniques]) => (
               <div key={category}>
-                <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
+                <p className="mb-1.5 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] text-mist-dim">
                   {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS]}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {techniques.map((technique) => (
                     <button
                       key={technique.id}
@@ -307,11 +299,11 @@ export function ComboEditor({
                       onClick={() => addStep(technique.id)}
                       disabled={steps.length >= 8}
                       className={cn(
-                        'inline-flex min-h-8 items-center gap-1 rounded-lg border border-line bg-panel/60 px-2 text-[11px] text-mist transition-colors',
-                        'hover:border-accent/40 hover:text-paper disabled:opacity-40',
+                        'inline-flex min-h-7 items-center gap-1 border border-line bg-panel px-1.5 text-[10px] text-mist transition-colors',
+                        'hover:border-accent hover:text-paper disabled:opacity-35',
                       )}
                     >
-                      <Plus className="size-3 text-accent" />
+                      <Plus className="size-2.5 text-accent" />
                       {renderTechniqueName(technique, stance)}
                     </button>
                   ))}
@@ -319,7 +311,9 @@ export function ComboEditor({
               </div>
             ))}
             {filtered.length === 0 ? (
-              <p className="py-6 text-center text-xs text-mist-dim">No techniques match that search.</p>
+              <p className="py-6 text-center font-mono text-[10px] uppercase tracking-[0.06em] text-mist-dim">
+                No techniques match that search.
+              </p>
             ) : null}
           </div>
         </div>

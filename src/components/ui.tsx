@@ -2,6 +2,7 @@ import {
   useEffect,
   useId,
   type ButtonHTMLAttributes,
+  type CSSProperties,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -19,19 +20,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary:
-    'bg-accent text-ink hover:bg-accent-bright active:bg-accent-deep shadow-[0_10px_30px_-12px_rgba(255,77,46,0.65)]',
+  primary: 'bg-accent text-ink hover:bg-accent-bright active:bg-accent-deep',
   secondary:
-    'bg-panel text-paper border border-line hover:bg-panel-raised hover:border-line-bright',
-  ghost: 'bg-transparent text-mist hover:bg-panel hover:text-paper',
-  danger: 'bg-danger/12 text-danger border border-danger/25 hover:bg-danger/20',
+    'bg-panel text-paper border border-line hover:border-line-bright hover:bg-panel-raised',
+  ghost: 'bg-transparent text-mist border border-transparent hover:bg-panel hover:text-paper',
+  danger: 'bg-danger/10 text-danger border border-danger/35 hover:bg-danger/20',
 };
 
 const buttonSizes: Record<ButtonSize, string> = {
-  sm: 'h-9 px-3.5 text-[13px] rounded-lg gap-1.5',
-  md: 'h-11 px-5 text-sm rounded-xl gap-2',
-  lg: 'h-14 px-6 text-[15px] rounded-2xl gap-2.5',
-  icon: 'size-11 rounded-xl',
+  sm: 'h-8 px-3 text-[10px] gap-1.5',
+  md: 'h-10 px-4 text-[11px] gap-2',
+  lg: 'h-12 px-5 text-xs gap-2',
+  icon: 'size-10',
 };
 
 export function Button({
@@ -49,9 +49,9 @@ export function Button({
     <button
       type={type}
       className={cn(
-        'inline-flex select-none items-center justify-center font-semibold tracking-[-0.01em] transition-all duration-200',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-ink',
-        'disabled:pointer-events-none disabled:opacity-40',
+        'inline-flex select-none items-center justify-center border font-mono font-semibold uppercase tracking-[0.08em] transition-colors duration-100',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ink',
+        'disabled:pointer-events-none disabled:opacity-35',
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -59,7 +59,7 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : icon}
+      {loading ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : icon}
       {children}
     </button>
   );
@@ -77,8 +77,8 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        'grid size-10 place-items-center rounded-xl border border-line bg-panel/70 text-mist transition-colors hover:border-line-bright hover:bg-panel-raised hover:text-paper',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:pointer-events-none disabled:opacity-40',
+        'grid size-9 shrink-0 place-items-center border border-line bg-panel text-mist transition-colors hover:border-line-bright hover:bg-panel-raised hover:text-paper',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35',
         className,
       )}
       {...props}
@@ -88,35 +88,105 @@ export function IconButton({
   );
 }
 
+export function WindowBar({
+  title,
+  code,
+  actions,
+  active = false,
+  className,
+}: {
+  title: ReactNode;
+  code?: ReactNode;
+  actions?: ReactNode;
+  active?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'window-bar',
+        active && 'border-line-bright bg-panel-raised',
+        className,
+      )}
+    >
+      <span className="window-controls" aria-hidden>
+        <span />
+        <span />
+        <span />
+      </span>
+      <span className="window-title">{title}</span>
+      {actions ? <div className="flex shrink-0 items-center gap-1">{actions}</div> : null}
+      {code ? <span className="window-code">{code}</span> : null}
+    </div>
+  );
+}
+
+export function WindowFrame({
+  title,
+  code,
+  actions,
+  active = false,
+  children,
+  className,
+  bodyClassName,
+  footer,
+}: {
+  title: ReactNode;
+  code?: ReactNode;
+  actions?: ReactNode;
+  active?: boolean;
+  children: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  footer?: ReactNode;
+}) {
+  return (
+    <section
+      className={cn(
+        'window-panel flex min-w-0 flex-col',
+        active && 'border-line-bright',
+        className,
+      )}
+    >
+      <WindowBar title={title} code={code} actions={actions} active={active} />
+      <div className={cn('min-w-0 flex-1', bodyClassName)}>{children}</div>
+      {footer ? <div className="border-t border-line bg-ink-soft">{footer}</div> : null}
+    </section>
+  );
+}
+
 export function PageHeader({
   eyebrow,
+  code,
   title,
   description,
   actions,
 }: {
   eyebrow?: string;
+  code?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
 }) {
   return (
-    <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        {eyebrow ? (
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-accent">
-            {eyebrow}
-          </p>
-        ) : null}
-        <h1 className="font-display text-[44px] font-semibold uppercase leading-[0.92] tracking-[0.01em] text-paper sm:text-6xl">
-          {title}
-        </h1>
-        {description ? (
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-mist sm:text-[15px]">
-            {description}
-          </p>
-        ) : null}
+    <header className="window-panel mb-4 animate-fade-up">
+      <WindowBar
+        title={eyebrow ?? 'strikr :: workspace'}
+        code={code ?? 'STRIKR'}
+        actions={actions}
+      />
+      <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
+        <div className="min-w-0">
+          <h1 className="font-display text-[40px] font-semibold uppercase leading-[0.84] tracking-[0.01em] text-paper sm:text-[56px]">
+            {title}
+          </h1>
+          {description ? (
+            <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-mist sm:text-sm">
+              {description}
+            </p>
+          ) : null}
+        </div>
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
     </header>
   );
 }
@@ -131,12 +201,12 @@ export function SectionTitle({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-3 flex items-end justify-between gap-4">
+    <div className="mb-3 flex items-end justify-between gap-4 border-b border-line pb-2">
       <div>
-        <h2 className="font-display text-xl font-semibold uppercase tracking-[0.04em] text-paper">
+        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-paper">
           {title}
         </h2>
-        {detail ? <p className="mt-0.5 text-xs text-mist-dim">{detail}</p> : null}
+        {detail ? <p className="mt-1 text-[11px] text-mist-dim">{detail}</p> : null}
       </div>
       {action}
     </div>
@@ -169,8 +239,7 @@ export function Segmented<T extends string>({
       role="group"
       aria-label={label}
       className={cn(
-        'grid gap-1 rounded-2xl border border-line bg-ink-soft p-1',
-        compact ? 'grid-flow-col auto-cols-fr' : 'grid-flow-col auto-cols-fr',
+        'grid divide-x divide-line border border-line bg-ink-soft',
         className,
       )}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
@@ -184,11 +253,11 @@ export function Segmented<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2.5 text-[13px] font-semibold transition-all duration-200',
-              compact ? 'min-h-9 text-xs' : 'sm:min-h-11',
+              'flex items-center justify-center gap-1.5 px-2 font-mono font-semibold uppercase tracking-[0.08em] transition-colors duration-100',
+              compact ? 'min-h-8 text-[9px]' : 'min-h-10 text-[10px]',
               active
-                ? 'bg-paper text-ink shadow-sm'
-                : 'text-mist-dim hover:bg-panel/70 hover:text-paper',
+                ? 'bg-accent text-ink'
+                : 'text-mist-dim hover:bg-panel hover:text-paper',
             )}
           >
             {option.icon}
@@ -211,15 +280,15 @@ export function Chip({
 }) {
   const tones = {
     default: 'border-line bg-panel text-mist',
-    accent: 'border-accent/25 bg-accent/10 text-accent-bright',
-    success: 'border-success/25 bg-success/10 text-success',
-    danger: 'border-danger/25 bg-danger/10 text-danger',
-    muted: 'border-line/70 bg-transparent text-mist-dim',
+    accent: 'border-accent/45 bg-accent/10 text-accent-bright',
+    success: 'border-success/35 bg-success/10 text-success',
+    danger: 'border-danger/35 bg-danger/10 text-danger',
+    muted: 'border-line bg-transparent text-mist-dim',
   };
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]',
+        'inline-flex items-center gap-1 border px-1.5 py-1 font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.1em]',
         tones[tone],
         className,
       )}
@@ -251,34 +320,34 @@ export function NumberStepper({
   const id = useId();
   const clamp = (next: number) => Math.min(max, Math.max(min, next));
   return (
-    <div>
-      <label id={id} className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-mist-dim">
+    <div className="min-w-0">
+      <label id={id} className="meta-label mb-1.5 block">
         {label}
       </label>
-      <div className="flex h-14 items-center justify-between rounded-2xl border border-line bg-ink-soft px-2">
+      <div className="flex h-12 min-w-0 items-stretch border border-line bg-ink-soft">
         <button
           type="button"
           aria-label={`Decrease ${label}`}
           onClick={() => onChange(clamp(value - step))}
           disabled={value <= min}
-          className="grid size-10 place-items-center rounded-xl text-mist-dim transition-colors hover:bg-panel hover:text-paper disabled:opacity-30"
+          className="grid w-9 shrink-0 place-items-center border-r border-line text-mist-dim transition-colors hover:bg-panel hover:text-paper disabled:opacity-25"
         >
-          <Minus className="size-4" />
+          <Minus className="size-3.5" />
         </button>
-        <div className="text-center" aria-labelledby={id}>
-          <span className="font-display text-2xl font-semibold tabular-nums text-paper">
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-1 px-1" aria-labelledby={id}>
+          <span className="truncate font-display text-xl font-semibold tabular-nums text-paper">
             {format(value)}
           </span>
-          {suffix ? <span className="ml-1 text-[10px] uppercase tracking-wider text-mist-dim">{suffix}</span> : null}
+          {suffix ? <span className="text-[8px] uppercase tracking-wider text-mist-dim">{suffix}</span> : null}
         </div>
         <button
           type="button"
           aria-label={`Increase ${label}`}
           onClick={() => onChange(clamp(value + step))}
           disabled={value >= max}
-          className="grid size-10 place-items-center rounded-xl text-mist-dim transition-colors hover:bg-panel hover:text-paper disabled:opacity-30"
+          className="grid w-9 shrink-0 place-items-center border-l border-line text-mist-dim transition-colors hover:bg-panel hover:text-paper disabled:opacity-25"
         >
-          <Plus className="size-4" />
+          <Plus className="size-3.5" />
         </button>
       </div>
     </div>
@@ -299,8 +368,8 @@ export function Toggle({
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div>
-        <p className="text-sm font-medium text-paper">{label}</p>
-        {description ? <p className="mt-0.5 text-xs leading-relaxed text-mist-dim">{description}</p> : null}
+        <p className="text-[13px] font-medium text-paper">{label}</p>
+        {description ? <p className="mt-0.5 text-[11px] leading-relaxed text-mist-dim">{description}</p> : null}
       </div>
       <button
         type="button"
@@ -309,14 +378,14 @@ export function Toggle({
         aria-label={label}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-200',
-          checked ? 'border-accent/60 bg-accent' : 'border-line-bright bg-panel-raised',
+          'relative h-6 w-11 shrink-0 border transition-colors duration-100',
+          checked ? 'border-accent bg-accent' : 'border-line-bright bg-ink-soft',
         )}
       >
         <span
           className={cn(
-            'absolute top-1 size-[18px] rounded-full transition-transform duration-200',
-            checked ? 'translate-x-[26px] bg-ink' : 'translate-x-1 bg-mist',
+            'absolute left-[3px] top-[3px] size-4 transition-transform duration-100',
+            checked ? 'translate-x-[22px] bg-ink' : 'translate-x-0 bg-mist-dim',
           )}
         />
       </button>
@@ -341,13 +410,12 @@ export function RangeInput({
   label: string;
   display: string;
 }) {
+  const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-mist-dim">
-          {label}
-        </label>
-        <span className="font-display text-lg font-semibold text-paper">{display}</span>
+      <div className="mb-2.5 flex items-center justify-between border-b border-line pb-1.5">
+        <label className="meta-label">{label}</label>
+        <span className="font-mono text-[11px] font-semibold tabular-nums text-paper">{display}</span>
       </div>
       <input
         type="range"
@@ -358,6 +426,7 @@ export function RangeInput({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
         className="strikr-range w-full"
+        style={{ '--range-progress': `${progress}%` } as CSSProperties}
       />
     </div>
   );
@@ -402,31 +471,45 @@ export function Modal({
         type="button"
         aria-label="Close dialog"
         onClick={onClose}
-        className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-black/80"
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         className={cn(
-          'relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-line bg-coal shadow-2xl animate-fade-up sm:rounded-[28px]',
-          size === 'sm' ? 'sm:max-w-md' : size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-xl',
+          'relative flex max-h-[92dvh] w-full flex-col overflow-hidden border border-line-bright bg-coal animate-fade-up sm:max-h-[86dvh]',
+          size === 'sm' ? 'sm:max-w-md' : size === 'lg' ? 'sm:max-w-4xl' : 'sm:max-w-xl',
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line/70 px-5 py-4 sm:px-6">
-          <div>
-            <h2 id="modal-title" className="font-display text-2xl font-semibold uppercase tracking-[0.03em]">
-              {title}
-            </h2>
-            {description ? <p className="mt-1 text-xs leading-relaxed text-mist-dim">{description}</p> : null}
-          </div>
-          <IconButton label="Close" onClick={onClose} className="-mr-1 -mt-1 border-transparent bg-transparent">
-            <X className="size-5" />
+        <div className="window-bar min-h-9 border-line-bright bg-panel-raised px-3">
+          <span className="window-controls" aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
+          <h2 id="modal-title" className="window-title text-paper">
+            {title}
+          </h2>
+          <span className="window-code">DIALOG</span>
+          <IconButton
+            label="Close"
+            onClick={onClose}
+            className="size-7 border-transparent bg-transparent"
+          >
+            <X className="size-4" />
           </IconButton>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+          {description ? (
+            <p className="mb-4 border-l-2 border-accent bg-ink-soft px-3 py-2 font-mono text-[10px] leading-relaxed tracking-[0.02em] text-mist-dim">
+              {description}
+            </p>
+          ) : null}
+          {children}
+        </div>
         {footer ? (
-          <div className="border-t border-line/70 bg-coal/95 px-5 py-4 sm:px-6">{footer}</div>
+          <div className="border-t border-line bg-ink-soft px-4 py-3 sm:px-5">{footer}</div>
         ) : null}
       </div>
     </div>,
@@ -461,7 +544,7 @@ export function ConfirmDialog({
       description={description}
       size="sm"
       footer={
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
@@ -471,7 +554,9 @@ export function ConfirmDialog({
         </div>
       }
     >
-      <p className="text-sm leading-relaxed text-mist">This action cannot be undone.</p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-mist-dim">
+        This action cannot be undone.
+      </p>
     </Modal>
   );
 }
@@ -488,14 +573,14 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-3xl border border-dashed border-line bg-panel/30 px-6 py-12 text-center">
-      <div className="mb-4 grid size-12 place-items-center rounded-2xl border border-line bg-panel text-mist-dim">
+    <div className="flex flex-col items-center border border-dashed border-line bg-panel/60 px-6 py-12 text-center">
+      <div className="mb-4 grid size-10 place-items-center border border-line bg-ink-soft text-mist-dim">
         {icon}
       </div>
-      <h3 className="font-display text-xl font-semibold uppercase tracking-[0.03em] text-paper">
+      <h3 className="font-display text-2xl font-semibold uppercase tracking-[0.03em] text-paper">
         {title}
       </h3>
-      <p className="mt-2 max-w-sm text-sm leading-relaxed text-mist-dim">{description}</p>
+      <p className="mt-2 max-w-sm text-xs leading-relaxed text-mist-dim">{description}</p>
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -511,21 +596,19 @@ export function StatTile({
   hint?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-panel/50 px-4 py-3.5">
-      <p className="font-display text-2xl font-semibold tabular-nums leading-none text-paper">
+    <div className="min-w-0 border border-line bg-panel px-3 py-3">
+      <p className="font-display text-[26px] font-semibold tabular-nums leading-none text-paper">
         {value}
       </p>
-      <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-mist-dim">
-        {label}
-      </p>
-      {hint ? <p className="mt-0.5 text-[10px] text-mist-dim/70">{hint}</p> : null}
+      <p className="meta-label mt-2">{label}</p>
+      {hint ? <p className="mt-1 font-mono text-[9px] text-mist-dim">{hint}</p> : null}
     </div>
   );
 }
 
 export function InlineError({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-danger/25 bg-danger/10 px-3.5 py-2.5 text-xs leading-relaxed text-danger">
+    <div className="border border-danger/35 bg-danger/10 px-3 py-2 font-mono text-[10px] leading-relaxed text-danger">
       {children}
     </div>
   );
@@ -533,7 +616,7 @@ export function InlineError({ children }: { children: ReactNode }) {
 
 export function InlineNote({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-panel/60 px-3.5 py-2.5 text-xs leading-relaxed text-mist-dim">
+    <div className="border border-line bg-ink-soft px-3 py-2 font-mono text-[10px] leading-relaxed text-mist-dim">
       {children}
     </div>
   );

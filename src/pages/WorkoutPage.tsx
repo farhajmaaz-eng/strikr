@@ -30,7 +30,7 @@ import { cancelSpeech, primeSpeech, speak } from '../lib/speech';
 import { createId } from '../lib/id';
 import { formatClock, formatDuration, formatRoundLength } from '../lib/format';
 import { cn } from '../lib/cn';
-import { Button, ConfirmDialog, IconButton } from '../components/ui';
+import { Button, ConfirmDialog, IconButton, WindowBar, WindowFrame } from '../components/ui';
 import { Logo } from '../components/Logo';
 
 interface WorkoutSummary {
@@ -319,10 +319,10 @@ export function WorkoutPage() {
   }, [settings.wakeLockEnabled, timerStatus]);
 
   useEffect(() => {
-    if (!run) {
+    if (!run && !summary) {
       navigate('/setup', { replace: true });
     }
-  }, [run, navigate]);
+  }, [run, summary, navigate]);
 
   const togglePause = () => {
     const timer = timerRef.current;
@@ -439,179 +439,212 @@ export function WorkoutPage() {
           : 'Complete';
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-ink">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[45dvh] bg-[radial-gradient(60%_100%_at_50%_0%,rgba(255,77,46,0.12),transparent_75%)]" />
-      <div className="pointer-events-none absolute -left-32 top-1/3 size-80 rounded-full bg-white/[0.015] blur-3xl" />
-
-      <header className="relative z-10 flex items-center justify-between gap-3 px-4 py-4 sm:px-7">
-        <div className="flex items-center gap-3">
-          <Logo compact />
-          <div className="h-5 w-px bg-line" />
-          <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent">Live session</p>
-            <p className="text-[11px] font-medium text-mist">
-              {DISCIPLINE_LABELS[run.config.discipline]} · {run.config.stance} · {run.config.level}
-            </p>
+    <div className="flex min-h-dvh flex-col bg-ink">
+      <header className="border-b border-line bg-coal">
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Logo compact />
+            <span className="h-6 w-px bg-line" />
+            <div className="min-w-0">
+              <p className="meta-label text-accent">Live session</p>
+              <p className="truncate font-mono text-[9px] uppercase tracking-[0.08em] text-mist">
+                {DISCIPLINE_LABELS[run.config.discipline]} / {run.config.stance} / {run.config.level}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <IconButton
+              label={settings.soundEnabled ? 'Mute bells' : 'Unmute bells'}
+              onClick={toggleSound}
+              className="!size-8"
+            >
+              {settings.soundEnabled ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />}
+            </IconButton>
+            <IconButton
+              label={settings.speechEnabled ? 'Mute spoken callouts' : 'Unmute spoken callouts'}
+              onClick={toggleSpeech}
+              className="!size-8"
+            >
+              {settings.speechEnabled ? <Mic className="size-3.5" /> : <MicOff className="size-3.5" />}
+            </IconButton>
+            <IconButton
+              label="End session"
+              onClick={() => setConfirmEnd(true)}
+              className="!size-8 hover:border-danger/40 hover:bg-danger/10 hover:text-danger"
+            >
+              <X className="size-3.5" />
+            </IconButton>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <IconButton label={settings.soundEnabled ? 'Mute bells' : 'Unmute bells'} onClick={toggleSound}>
-            {settings.soundEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-          </IconButton>
-          <IconButton
-            label={settings.speechEnabled ? 'Mute spoken callouts' : 'Unmute spoken callouts'}
-            onClick={toggleSpeech}
-          >
-            {settings.speechEnabled ? <Mic className="size-4" /> : <MicOff className="size-4" />}
-          </IconButton>
-          <IconButton
-            label="End session"
-            onClick={() => setConfirmEnd(true)}
-            className="hover:border-danger/40 hover:bg-danger/10 hover:text-danger"
-          >
-            <X className="size-4" />
-          </IconButton>
+
+        <div className="flex items-center gap-2 border-t border-line px-3 py-2 sm:px-5">
+          <span className="meta-label shrink-0">Rounds</span>
+          <div className="flex flex-1 gap-1">
+            {Array.from({ length: totalRounds }, (_, index) => {
+              const roundNumber = index + 1;
+              const isCurrent = roundNumber === round && phase === 'round';
+              const isRest = roundNumber === round && phase === 'rest';
+              const isDone = completed.has(roundNumber);
+              const isSkipped = skipped.has(roundNumber);
+              return (
+                <div
+                  key={roundNumber}
+                  aria-hidden
+                  className={cn(
+                    'h-2 flex-1 border transition-colors duration-200',
+                    isDone && 'border-accent bg-accent',
+                    isSkipped && 'border-danger/50 bg-danger/40',
+                    isCurrent && 'border-paper bg-paper',
+                    isRest && 'border-accent/60 bg-accent/40',
+                    !isDone && !isSkipped && !isCurrent && !isRest && 'border-line bg-ink-soft',
+                  )}
+                />
+              );
+            })}
+          </div>
+          <span className="shrink-0 font-mono text-[9px] tabular-nums text-mist-dim">
+            {String(completed.size).padStart(2, '0')}/{String(totalRounds).padStart(2, '0')}
+          </span>
         </div>
       </header>
 
-      <div className="relative z-10 flex gap-1.5 px-4 sm:px-7">
-        {Array.from({ length: totalRounds }, (_, index) => {
-          const roundNumber = index + 1;
-          const isCurrent = roundNumber === round && phase === 'round';
-          const isRest = roundNumber === round && phase === 'rest';
-          const isDone = completed.has(roundNumber);
-          const isSkipped = skipped.has(roundNumber);
-          return (
-            <div
-              key={roundNumber}
-              className={cn(
-                'h-1.5 flex-1 rounded-full transition-all duration-500',
-                isDone && 'bg-accent',
-                isSkipped && 'bg-danger/50',
-                isCurrent && 'bg-paper/80',
-                isRest && 'bg-accent/40',
-                !isDone && !isSkipped && !isCurrent && !isRest && 'bg-line',
-              )}
-            />
-          );
-        })}
-      </div>
-
-      <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-4 pb-6 pt-7 sm:px-7 sm:pt-10">
-        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em]">
-          <span
-            className={cn(
-              'size-1.5 rounded-full',
-              isPaused
-                ? 'bg-mist-dim'
-                : phase === 'rest'
-                  ? 'bg-accent/60'
-                  : phase === 'prepare'
-                    ? 'bg-mist'
-                    : 'bg-accent animate-pulse-soft',
-            )}
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4">
+        <section className="window-panel flex flex-1 flex-col">
+          <WindowBar
+            title={`${statusLabel} / round ${round} of ${totalRounds}`}
+            code={phase.toUpperCase()}
+            actions={
+              <span className="hidden font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim sm:inline">
+                {isPaused ? 'timer frozen' : 'timestamp clock'}
+              </span>
+            }
           />
-          <span className={phase === 'rest' ? 'text-accent-bright' : 'text-mist'}>{statusLabel}</span>
-          <span className="text-mist-dim/50">·</span>
-          <span className="text-mist-dim">
-            {phase === 'rest' ? `${formatRoundLength(run.config.restSeconds)} rest` : `Round ${round} of ${totalRounds}`}
-          </span>
-        </div>
+          <div className="flex flex-1 flex-col items-center justify-center px-3 py-5 sm:py-8">
+            <div className="flex items-center gap-2 font-mono text-[9px] font-semibold uppercase tracking-[0.14em]">
+              <span
+                className={cn(
+                  'size-1.5',
+                  isPaused
+                    ? 'bg-mist-dim'
+                    : phase === 'rest'
+                      ? 'bg-accent/60'
+                      : phase === 'prepare'
+                        ? 'bg-mist'
+                        : 'bg-accent animate-blink',
+                )}
+              />
+              <span className={phase === 'rest' ? 'text-accent-bright' : 'text-mist'}>{statusLabel}</span>
+              <span className="text-mist-dim/50">/</span>
+              <span className="text-mist-dim">
+                {phase === 'rest'
+                  ? `${formatRoundLength(run.config.restSeconds)} rest`
+                  : `round ${round} of ${totalRounds}`}
+              </span>
+            </div>
 
-        <div className="relative mt-4 flex w-full flex-col items-center">
-          <p
-            className={cn(
-              'hero-number font-display font-semibold leading-[0.8] tracking-[-0.03em] text-paper',
-              'text-[clamp(6.5rem,32vw,13rem)]',
-              isPaused && 'text-mist',
-            )}
-            aria-live="off"
-          >
-            {formatClock(remainingMs)}
-          </p>
-          <div className="mt-5 h-1 w-full max-w-sm overflow-hidden rounded-full bg-line">
-            <div
+            <p
               className={cn(
-                'h-full rounded-full transition-[width] duration-200 ease-linear',
-                phase === 'rest' ? 'bg-accent/60' : 'bg-accent',
+                'hero-number mt-2 font-display font-semibold leading-[0.8] tracking-[-0.03em] text-paper',
+                'text-[clamp(5.5rem,28vw,11rem)]',
+                isPaused && 'text-mist',
               )}
-              style={{ width: `${phaseProgress * 100}%` }}
-            />
+              aria-live="off"
+            >
+              {formatClock(remainingMs)}
+            </p>
+
+            <div className="mt-4 w-full max-w-md">
+              <div className="mb-1 flex items-center justify-between font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">
+                <span>{phase === 'rest' ? 'Recovery' : phase === 'prepare' ? 'Count-in' : 'Round elapsed'}</span>
+                <span className="tabular-nums">{Math.round(phaseProgress * 100)}%</span>
+              </div>
+              <div className="h-2.5 border border-line bg-ink-soft p-px">
+                <div
+                  className={cn(
+                    'h-full transition-[width] duration-200 ease-linear',
+                    phase === 'rest' ? 'bg-accent/60' : 'bg-accent',
+                  )}
+                  style={{ width: `${phaseProgress * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="mt-6 flex min-h-[8.5rem] w-full flex-col items-center justify-center rounded-2xl border border-line/80 bg-panel/35 px-4 py-5 text-center sm:mt-8 sm:min-h-[10rem]">
-          {phase === 'prepare' ? (
-            <>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
-                Count-in
-              </p>
-              <h2 className="mt-2 font-display text-3xl font-semibold uppercase leading-none sm:text-4xl">
-                Hands up. Find your range.
-              </h2>
-              <p className="mt-2 text-xs text-mist-dim">
-                {run.config.rounds} rounds · {formatRoundLength(run.config.roundSeconds)} work ·{' '}
-                {run.config.restSeconds > 0 ? `${formatRoundLength(run.config.restSeconds)} rest` : 'no rest'}
-              </p>
-            </>
-          ) : phase === 'rest' ? (
-            <>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
-                Round {round} complete
-              </p>
-              <h2 className="mt-2 font-display text-3xl font-semibold uppercase leading-none sm:text-4xl">
-                Breathe. Reset.
-              </h2>
-              <p className="mt-2 text-xs text-mist-dim">
-                Next: round {Math.min(round + 1, totalRounds)} of {totalRounds}
-              </p>
-            </>
-          ) : activeCallout ? (
-            <>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
-                  Callout
+        <section className="window-panel mt-2">
+          <WindowBar
+            title="callout / active"
+            code={phase === 'rest' ? 'REST' : phase === 'prepare' ? 'READY' : 'WORK'}
+          />
+          <div className="flex min-h-[7.5rem] flex-col items-center justify-center px-3 py-4 text-center sm:min-h-[8.5rem] sm:px-5">
+            {phase === 'prepare' ? (
+              <>
+                <p className="meta-label text-accent">Count-in</p>
+                <h2 className="mt-1.5 font-display text-2xl font-semibold uppercase leading-none sm:text-3xl">
+                  Hands up. Find your range.
+                </h2>
+                <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.06em] text-mist-dim">
+                  {run.config.rounds} rounds / {formatRoundLength(run.config.roundSeconds)} work /{' '}
+                  {run.config.restSeconds > 0
+                    ? `${formatRoundLength(run.config.restSeconds)} rest`
+                    : 'no rest'}
                 </p>
-                <span className="text-[10px] text-mist-dim/60">
-                  {activeCallout.combination.name}
-                </span>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                {activeCallout.combination.steps.map((step, index) => {
-                  const calloutText = activeCallout.display.split(' · ')[index] ?? step;
-                  return (
-                    <span
-                      key={`${step}-${index}`}
-                      className="rounded-lg border border-line bg-ink-soft px-2.5 py-1.5 text-sm font-medium text-paper sm:px-3 sm:py-2 sm:text-base"
-                    >
-                      {calloutText}
-                    </span>
-                  );
-                })}
-              </div>
-              <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-mist-dim">
-                {formatRoundLength(run.config.roundSeconds)} round · {run.config.focus}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Ready</p>
-              <h2 className="mt-2 font-display text-3xl font-semibold uppercase leading-none">
-                First bell coming up.
-              </h2>
-              <p className="mt-2 text-xs text-mist-dim">Listen for the combination, then work.</p>
-            </>
-          )}
-        </div>
+              </>
+            ) : phase === 'rest' ? (
+              <>
+                <p className="meta-label text-accent">Round {round} complete</p>
+                <h2 className="mt-1.5 font-display text-2xl font-semibold uppercase leading-none sm:text-3xl">
+                  Breathe. Reset.
+                </h2>
+                <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.06em] text-mist-dim">
+                  Next: round {Math.min(round + 1, totalRounds)} of {totalRounds}
+                </p>
+              </>
+            ) : activeCallout ? (
+              <>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <p className="meta-label text-accent">Callout</p>
+                  <span className="font-mono text-[8px] uppercase tracking-[0.06em] text-mist-dim">
+                    {activeCallout.combination.name}
+                  </span>
+                </div>
+                <div className="mt-2.5 flex flex-wrap items-center justify-center gap-1">
+                  {activeCallout.combination.steps.map((step, index) => {
+                    const calloutText = activeCallout.display.split(' · ')[index] ?? step;
+                    return (
+                      <span
+                        key={`${step}-${index}`}
+                        className="border border-line bg-ink-soft px-2 py-1 text-[12px] font-medium text-paper sm:px-2.5 sm:py-1.5 sm:text-sm"
+                      >
+                        {calloutText}
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">
+                  {formatRoundLength(run.config.roundSeconds)} round / {run.config.focus}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="meta-label text-accent">Ready</p>
+                <h2 className="mt-1.5 font-display text-2xl font-semibold uppercase leading-none">
+                  First bell coming up.
+                </h2>
+                <p className="mt-2 text-[11px] text-mist-dim">Listen for the combination, then work.</p>
+              </>
+            )}
+          </div>
+        </section>
 
-        <div className="mt-auto w-full max-w-md pt-8">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+        <div className="mt-2 w-full">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-1.5">
             <Button
               size="lg"
               variant={isPaused ? 'primary' : 'secondary'}
               onClick={togglePause}
               icon={
-                isPaused ? <Play className="size-5 fill-current" /> : <Pause className="size-5 fill-current" />
+                isPaused ? <Play className="size-4 fill-current" /> : <Pause className="size-4 fill-current" />
               }
             >
               {isPaused ? 'Resume' : 'Pause'}
@@ -619,22 +652,22 @@ export function WorkoutPage() {
             <IconButton
               label={phase === 'rest' ? 'Skip rest' : 'Skip round'}
               onClick={skip}
-              className="size-14 rounded-2xl"
+              className="!size-12"
             >
-              <SkipForward className="size-5" />
+              <SkipForward className="size-4" />
             </IconButton>
             <IconButton
               label="End session"
               onClick={() => setConfirmEnd(true)}
-              className="size-14 rounded-2xl hover:border-danger/40 hover:bg-danger/10 hover:text-danger"
+              className="!size-12 hover:border-danger/40 hover:bg-danger/10 hover:text-danger"
             >
-              <Square className="size-4 fill-current" />
+              <Square className="size-3.5 fill-current" />
             </IconButton>
           </div>
-          <p className="mt-3 text-center text-[10px] leading-relaxed text-mist-dim">
+          <p className="mt-2 text-center font-mono text-[8px] uppercase tracking-[0.06em] text-mist-dim">
             {isPaused
               ? 'Timer frozen. Resume when your guard is up.'
-              : 'Timestamps keep the clock honest, even if the tab sleeps.'}
+              : 'Timestamp clock. Keeps time even if the tab sleeps.'}
           </p>
         </div>
       </main>
@@ -665,100 +698,112 @@ function WorkoutSummaryView({
   title?: string;
 }) {
   const { session, saved } = summary;
+  const headline = session.endedEarly
+    ? session.roundsCompleted > 0
+      ? { lead: 'Clock', accent: 'out.' }
+      : { lead: 'Bell', accent: 'stopped.' }
+    : { lead: 'Work', accent: 'banked.' };
+  const roundNoun = session.roundsPlanned === 1 ? 'round' : 'rounds';
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-ink px-4 py-5 sm:px-7 sm:py-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[50dvh] bg-[radial-gradient(60%_100%_at_50%_0%,rgba(255,77,46,0.14),transparent_75%)]" />
-      <header className="relative z-10 flex items-center justify-between">
+    <div className="flex min-h-dvh flex-col bg-ink px-3 py-3 sm:px-5 sm:py-4">
+      <header className="mb-2 flex items-center justify-between border border-line bg-coal px-3 py-2">
         <Logo />
-        <span className="rounded-full border border-line bg-panel px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
+        <span className="border border-line bg-panel px-2 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-mist-dim">
           {saved ? 'Saved locally' : 'Not saved'}
         </span>
       </header>
 
-      <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center py-10">
-        <div className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-full bg-success/10 text-success">
-            <Check className="size-4" />
-          </span>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-success">
-            {session.endedEarly ? 'Session ended' : 'Workout complete'}
-          </p>
-        </div>
-        <h1 className="mt-4 font-display text-[64px] font-semibold uppercase leading-[0.82] tracking-[-0.01em] sm:text-[86px]">
-          Work
-          <br />
-          <span className="text-accent">banked.</span>
-        </h1>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-mist">
-          {title ? `${title} · ` : ''}
-          {session.roundsCompleted} of {session.roundsPlanned} rounds completed. Every clean
-          repetition counts.
-        </p>
-
-        <div className="mt-7 grid grid-cols-3 gap-2">
-          <SummaryStat value={`${session.roundsCompleted}/${session.roundsPlanned}`} label="Rounds" />
-          <SummaryStat value={formatDuration(session.trainingSeconds, { compact: true })} label="Training time" />
-          <SummaryStat value={String(session.combinations.length)} label="Callouts" />
-        </div>
-
-        {!saved ? (
-          <p className="mt-4 text-xs leading-relaxed text-mist-dim">
-            This session was too short to log. Start another when you're ready.
-          </p>
-        ) : null}
-
-        {session.combinations.length > 0 ? (
-          <div className="mt-6 rounded-2xl border border-line bg-panel/40 p-4">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-mist-dim">
-              Combinations thrown
+      <WindowFrame title="session / summary" code={session.endedEarly ? 'ENDED' : 'COMPLETE'} active className="mx-auto w-full max-w-2xl">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-2">
+            <span className="grid size-7 place-items-center border border-success/40 bg-success/10 text-success">
+              <Check className="size-3.5" />
+            </span>
+            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-success">
+              {session.endedEarly ? 'Session ended' : 'Workout complete'}
             </p>
-            <div className="max-h-40 space-y-2 overflow-y-auto pr-1">
-              {session.combinations.slice(0, 12).map((combination, index) => (
-                <div key={`${combination.name}-${index}`} className="flex items-start gap-2">
-                  <span className="mt-0.5 text-[9px] font-semibold tabular-nums text-accent">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-medium text-mist">{combination.name}</p>
-                    <p className="mt-0.5 text-[10px] text-mist-dim">
-                      {combination.steps
-                        .map((step) => techniqueNameById(step, session.stance))
-                        .join(' · ')}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
-        ) : null}
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
-          <Button size="lg" onClick={onDone} icon={<CornerUpRight className="size-4" />}>
-            Done
-          </Button>
-          <Button size="lg" variant="secondary" onClick={onAgain} icon={<RotateCcw className="size-4" />}>
-            Train again
-          </Button>
-          <Button size="lg" variant="ghost" onClick={onHistory}>
-            History <ChevronRight className="size-4" />
-          </Button>
+          <h1 className="mt-3 font-display text-[56px] font-semibold uppercase leading-[0.8] tracking-[-0.01em] sm:text-[76px]">
+            {headline.lead}
+            <br />
+            <span className="text-accent">{headline.accent}</span>
+          </h1>
+          <p className="mt-3 max-w-md text-[12px] leading-relaxed text-mist">
+            {title ? `${title} / ` : ''}
+            {session.endedEarly
+              ? session.roundsCompleted > 0
+                ? `${session.roundsCompleted} of ${session.roundsPlanned} ${roundNoun} completed before you stopped the clock.`
+                : 'No rounds were completed before you stopped the clock.'
+              : `${session.roundsCompleted} of ${session.roundsPlanned} ${roundNoun} completed. Every clean repetition counts.`}
+          </p>
+
+          <div className="mt-4 grid grid-cols-3 gap-1.5">
+            <SummaryStat value={`${session.roundsCompleted}/${session.roundsPlanned}`} label="Rounds" />
+            <SummaryStat value={formatDuration(session.trainingSeconds, { compact: true })} label="Training time" />
+            <SummaryStat value={String(session.combinations.length)} label="Callouts" />
+          </div>
+
+          {!saved ? (
+            <p className="mt-3 border-l-2 border-accent bg-ink-soft px-3 py-2 font-mono text-[9px] leading-relaxed text-mist-dim">
+              This session was too short to log. Start another when you're ready.
+            </p>
+          ) : null}
+
+          {session.combinations.length > 0 ? (
+            <div className="mt-3 border border-line bg-ink-soft">
+              <div className="window-bar min-h-7 border-line px-2">
+                <span className="window-title">combinations thrown</span>
+                <span className="window-code">{String(session.combinations.length).padStart(2, '0')}</span>
+              </div>
+              <div className="max-h-40 space-y-2 overflow-y-auto p-2.5">
+                {session.combinations.slice(0, 12).map((combination, index) => (
+                  <div key={`${combination.name}-${index}`} className="flex items-start gap-2">
+                    <span className="mt-0.5 border border-line bg-panel px-1 py-0.5 font-mono text-[8px] font-semibold tabular-nums text-accent">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <div>
+                      <p className="text-[11px] font-medium text-mist">{combination.name}</p>
+                      <p className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.04em] text-mist-dim">
+                        {combination.steps
+                          .map((step) => techniqueNameById(step, session.stance))
+                          .join(' / ')}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-4 grid gap-1.5 sm:grid-cols-[1fr_auto_auto]">
+            <Button size="lg" onClick={onDone} icon={<CornerUpRight className="size-4" />}>
+              Done
+            </Button>
+            <Button size="lg" variant="secondary" onClick={onAgain} icon={<RotateCcw className="size-3.5" />}>
+              Train again
+            </Button>
+            <Button size="lg" variant="ghost" onClick={onHistory}>
+              History <ChevronRight className="size-3.5" />
+            </Button>
+          </div>
         </div>
-      </main>
-
-      <footer className="relative z-10 flex items-center justify-center gap-2 pb-safe text-[10px] text-mist-dim">
-        <Clock3 className="size-3.5" />
-        {formatRoundLength(session.roundSeconds)} rounds · {formatRoundLength(session.restSeconds)} rest
-      </footer>
+        <div className="flex items-center justify-center gap-2 border-t border-line bg-ink-soft px-3 py-2 pb-safe font-mono text-[8px] uppercase tracking-[0.08em] text-mist-dim">
+          <Clock3 className="size-3" />
+          {formatRoundLength(session.roundSeconds)} {roundNoun} /{' '}
+          {session.restSeconds > 0 ? `${formatRoundLength(session.restSeconds)} rest` : 'no rest'}
+        </div>
+      </WindowFrame>
     </div>
   );
 }
 
 function SummaryStat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-panel/50 px-3 py-4 text-center">
-      <p className="font-display text-3xl font-semibold leading-none tabular-nums text-paper">{value}</p>
-      <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-mist-dim">{label}</p>
+    <div className="border border-line bg-ink-soft px-2 py-3 text-center">
+      <p className="font-display text-2xl font-semibold leading-none tabular-nums text-paper">{value}</p>
+      <p className="mt-1.5 font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-mist-dim">{label}</p>
     </div>
   );
 }

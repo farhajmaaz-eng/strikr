@@ -19,6 +19,7 @@ import {
   EmptyState,
   PageHeader,
   Segmented,
+  WindowFrame,
 } from '../components/ui';
 import { ComboCard } from '../components/ComboCard';
 import { ComboEditor } from '../components/ComboEditor';
@@ -116,171 +117,176 @@ export function CombosPage() {
   return (
     <div className="animate-fade-up">
       <PageHeader
-        eyebrow="Combination library"
+        eyebrow="Combo library"
+        code="LIB / 02"
         title="The arsenal."
-        description="Curated flows and your own sequences. Filter by discipline, sharpen a favorite, or build something new."
+        description="Curated flows and your own sequences. Filter the stock, favorite the sharp ones, or build a new combination."
         actions={
-          <Button onClick={openNew} icon={<Plus className="size-4" />} size="sm">
+          <Button onClick={openNew} icon={<Plus className="size-3" />} size="sm">
             New combo
           </Button>
         }
       />
 
-      <div className="mb-5 space-y-3">
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-panel/40 p-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="max-w-md flex-1">
-            <Segmented
-              options={DISCIPLINES.map((item) => ({
-                value: item,
-                label: DISCIPLINE_LABELS[item],
-              }))}
-              value={discipline}
-              onChange={setDiscipline}
-              compact
-            />
+      <WindowFrame title="library / filter" code="FILTERS" className="mb-3">
+        <div className="space-y-2.5 p-3">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl flex-1">
+              <Segmented
+                options={DISCIPLINES.map((item) => ({
+                  value: item,
+                  label: DISCIPLINE_LABELS[item],
+                }))}
+                value={discipline}
+                onChange={setDiscipline}
+                compact
+              />
+            </div>
+            <div className="flex items-center gap-2 font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-mist-dim">
+              <span>{filtered.length} shown</span>
+              <span className="text-mist-dim/40">/</span>
+              <span className="inline-flex items-center gap-1">
+                <Star className="size-2.5 text-accent" /> {favorites.length} favorites
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-mist-dim">
-              {filtered.length} shown
-            </span>
-            <span className="text-mist-dim/40">·</span>
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-mist-dim">
-              <Star className="size-3 text-accent" /> {favorites.length} favorites
-            </span>
-          </div>
-        </div>
 
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-mist-dim" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search combinations or techniques"
-              className="field-input pl-10"
-            />
-            {search ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-mist-dim" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search combinations or techniques"
+                className="field-input pl-9"
+              />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center text-mist-dim hover:text-paper"
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null}
+            </div>
+            <div className="flex gap-1.5">
+              <select
+                aria-label="Filter by level"
+                className="field-input w-auto min-w-[8rem] pr-8"
+                value={level}
+                onChange={(event) => setLevel(event.target.value as LevelFilter)}
+              >
+                <option value="all">All levels</option>
+                {LEVELS.map((item) => (
+                  <option key={item} value={item}>
+                    {item.charAt(0).toUpperCase() + item.slice(1)}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Filter by focus"
+                className="field-input w-auto min-w-[8rem] pr-8"
+                value={focus}
+                onChange={(event) => setFocus(event.target.value as 'all' | Focus)}
+              >
+                <option value="all">All focuses</option>
+                {FOCUSES.filter((item) => item !== 'clinch' || discipline === 'muay-thai').map((item) => (
+                  <option key={item} value={item}>
+                    {FOCUS_LABELS[item]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1 border-t border-line pt-2.5">
+            {(
+              [
+                { value: 'all', label: 'Everything' },
+                { value: 'favorites', label: 'Favorites' },
+                { value: 'custom', label: 'My library' },
+                { value: 'ai', label: 'AI generated' },
+              ] as { value: SourceFilter; label: string }[]
+            ).map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setSource(item.value)}
+                className={cn(
+                  'border px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.06em] transition-colors duration-100',
+                  source === item.value
+                    ? 'border-accent bg-accent text-ink'
+                    : 'border-line bg-ink-soft text-mist-dim hover:border-line-bright hover:text-paper',
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+            {activeFilters > 0 ? (
               <button
                 type="button"
-                aria-label="Clear search"
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-mist-dim hover:text-paper"
+                onClick={clearFilters}
+                className="ml-auto inline-flex items-center gap-1 font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-mist-dim hover:text-paper"
               >
-                <X className="size-3.5" />
+                <X className="size-3" /> Clear ({activeFilters})
               </button>
-            ) : null}
-          </div>
-          <div className="flex gap-2">
-            <select
-              aria-label="Filter by level"
-              className="field-input w-auto min-w-[8.5rem] pr-8"
-              value={level}
-              onChange={(event) => setLevel(event.target.value as LevelFilter)}
-            >
-              <option value="all">All levels</option>
-              {LEVELS.map((item) => (
-                <option key={item} value={item}>
-                  {item.charAt(0).toUpperCase() + item.slice(1)}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by focus"
-              className="field-input w-auto min-w-[8.5rem] pr-8"
-              value={focus}
-              onChange={(event) => setFocus(event.target.value as 'all' | Focus)}
-            >
-              <option value="all">All focuses</option>
-              {FOCUSES.filter((item) => item !== 'clinch' || discipline === 'muay-thai').map((item) => (
-                <option key={item} value={item}>
-                  {FOCUS_LABELS[item]}
-                </option>
-              ))}
-            </select>
+            ) : (
+              <span className="ml-auto hidden items-center gap-1 font-mono text-[8px] uppercase tracking-[0.06em] text-mist-dim/70 sm:inline-flex">
+                <SlidersHorizontal className="size-3" /> Duplicates blocked
+              </span>
+            )}
           </div>
         </div>
+      </WindowFrame>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          {(
-            [
-              { value: 'all', label: 'Everything' },
-              { value: 'favorites', label: 'Favorites' },
-              { value: 'custom', label: 'My library' },
-              { value: 'ai', label: 'AI generated' },
-            ] as { value: SourceFilter; label: string }[]
-          ).map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => setSource(item.value)}
-              className={cn(
-                'rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors',
-                source === item.value
-                  ? 'border-accent/35 bg-accent/10 text-accent-bright'
-                  : 'border-line bg-transparent text-mist-dim hover:border-line-bright hover:text-mist',
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-          {activeFilters > 0 ? (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-mist-dim hover:text-paper"
-            >
-              <X className="size-3" /> Clear filters ({activeFilters})
-            </button>
+      <WindowFrame title="combination library" code={`${String(filtered.length).padStart(2, '0')} SHOWN`}>
+        <div className="p-2.5">
+          {filtered.length > 0 ? (
+            <div className="grid gap-2 md:grid-cols-2">
+              {filtered.map((combination) => (
+                <ComboCard
+                  key={combination.id}
+                  combination={combination}
+                  stance={settings.defaultStance}
+                  favorite={favorites.includes(combination.id)}
+                  onToggleFavorite={() => toggleFavorite(combination.id)}
+                  onEdit={
+                    combination.source !== 'curated'
+                      ? () => {
+                          setEditing(combination);
+                          setEditorOpen(true);
+                        }
+                      : undefined
+                  }
+                  onDelete={
+                    combination.source !== 'curated' ? () => setDeleteTarget(combination) : undefined
+                  }
+                />
+              ))}
+            </div>
           ) : (
-            <span className="ml-auto inline-flex items-center gap-1 text-[10px] text-mist-dim/60">
-              <SlidersHorizontal className="size-3" /> Duplicate sequences are blocked
-            </span>
-          )}
-        </div>
-      </div>
-
-      {filtered.length > 0 ? (
-        <div className="grid gap-3 md:grid-cols-2">
-          {filtered.map((combination) => (
-            <ComboCard
-              key={combination.id}
-              combination={combination}
-              stance={settings.defaultStance}
-              favorite={favorites.includes(combination.id)}
-              onToggleFavorite={() => toggleFavorite(combination.id)}
-              onEdit={
-                combination.source !== 'curated'
-                  ? () => {
-                      setEditing(combination);
-                      setEditorOpen(true);
-                    }
-                  : undefined
-              }
-              onDelete={
-                combination.source !== 'curated' ? () => setDeleteTarget(combination) : undefined
+            <EmptyState
+              icon={<Layers3 className="size-4" />}
+              title="No combinations here"
+              description="Loosen the filters, or build a fresh sequence for this discipline and level."
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  {activeFilters > 0 ? (
+                    <Button variant="secondary" size="sm" onClick={clearFilters} icon={<Filter className="size-3" />}>
+                      Clear filters
+                    </Button>
+                  ) : null}
+                  <Button size="sm" onClick={openNew} icon={<Plus className="size-3" />}>
+                    Build a combination
+                  </Button>
+                </div>
               }
             />
-          ))}
+          )}
         </div>
-      ) : (
-        <EmptyState
-          icon={<Layers3 className="size-5" />}
-          title="No combinations here"
-          description="Loosen the filters, or build a fresh sequence for this discipline and level."
-          action={
-            <div className="flex flex-wrap justify-center gap-2">
-              {activeFilters > 0 ? (
-                <Button variant="secondary" size="sm" onClick={clearFilters} icon={<Filter className="size-3.5" />}>
-                  Clear filters
-                </Button>
-              ) : null}
-              <Button size="sm" onClick={openNew} icon={<Plus className="size-3.5" />}>
-                Build a combination
-              </Button>
-            </div>
-          }
-        />
-      )}
+      </WindowFrame>
 
       {editorOpen ? (
         <ComboEditor
@@ -306,7 +312,7 @@ export function CombosPage() {
         title="Delete combination?"
         description={
           deleteTarget
-            ? `“${deleteTarget.name}” will be removed from your local library.`
+            ? `"${deleteTarget.name}" will be removed from your local library.`
             : 'This combination will be removed.'
         }
         confirmLabel="Delete"
